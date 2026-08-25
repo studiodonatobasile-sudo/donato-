@@ -1,215 +1,182 @@
 import { useCallback, useEffect, useState } from 'react'
-import {
-  deleteAttachmentBlob,
-  deleteItem as dbDeleteItem,
-  deleteVoiceNoteBlob,
-  getAllItems,
-  getSettings,
-  saveAttachmentBlob,
-  saveItem as dbSaveItem,
-  saveSettings,
-  saveVoiceNoteBlob
-} from './db'
-import { createEmptyItem, DEFAULT_SETTINGS, type AgendaItem, type AppSettings } from './types'
-import { todayStr } from './utils/dateUtils'
-import { useAlarms } from './hooks/useAlarms'
+import { deleteExpense as dbDeleteExpense, getAllExpenses, getSettings, saveExpense as dbSaveExpense, saveSettings } from './db'
+import { createEmptyExpense, DEFAULT_SETTINGS, type AppSettings, type Expense, type SummaryKind } from './types'
+import { useSummaryScheduler } from './hooks/useSummaryScheduler'
 import { Header } from './components/Header'
-import { VoiceCommandBar } from './components/VoiceCommandBar'
-import { ItemList, type ListFilter } from './components/ItemList'
-import { ItemForm, type ItemFormSubmitPayload } from './components/ItemForm'
-import { MorningSummary } from './components/MorningSummary'
+import { VoiceExpenseBar } from './components/VoiceExpenseBar'
+import { Dashboard } from './components/Dashboard'
+import { ExpenseForm } from './components/ExpenseForm'
+import { SummaryModal } from './components/SummaryModal'
 import { SettingsPanel } from './components/SettingsPanel'
-import { ActiveAlertsBanner } from './components/ActiveAlertsBanner'
 
-type FormState =
-  | { mode: 'closed' }
-  | { mode: 'new'; draft: AgendaItem; transcript?: string }
-  | { mode: 'edit'; draft: AgendaItem }
+type FormState = { mode: 'closed' } | { mode: 'new'; draft: Expense; transcript?: string } | { mode: 'edit'; draft: Expense }
 
-function currentHHMM(): string {
-  const d = new Date()
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-}
+const SUMMARY_CHOICES: { id: SummaryKind; label: string; emoji: string }[] = [
+  { id: 'daily', label: 'Riepilogo di oggi', emoji: '🌙' },
+  { id: 'weekly', label: 'Riepilogo della settimana', emoji: '📅' },
+  { id: 'monthly', label: 'Riepilogo del mese', emoji: '🗓️' }
+]
 
 export default function App() {
-  const [items, setItems] = useState<AgendaItem[]>([])
+  const [expenses, setExpenses] = useState<Expense[]>([])
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS)
   const [loaded, setLoaded] = useState(false)
-  const [filter, setFilter] = useState<ListFilter>('prossimi')
   const [formState, setFormState] = useState<FormState>({ mode: 'closed' })
   const [showSettings, setShowSettings] = useState(false)
-  const [showSummary, setShowSummary] = useState(false)
-  const [summaryAutoSpeak, setSummaryAutoSpeak] = useState(false)
+  const [showSummaryChooser, setShowSummaryChooser] = useState(false)
+  const [manualSummary, setManualSummary] = useState<SummaryKind | null>(null)
 
   useEffect(() => {
-    Promise.all([getAllItems(), getSettings()]).then(([loadedItems, loadedSettings]) => {
-      setItems(loadedItems)
+    Promise.all([getAllExpenses(), getSettings()]).then(([loadedExpenses, loadedSettings]) => {
+      setExpenses(loadedExpenses)
       setSettings(loadedSettings)
       setLoaded(true)
     })
   }, [])
 
-  // Riepilogo mattutino automatico: controlla al caricamento e ogni minuto se e' il momento di mostrarlo.
-  useEffect(() => {
-    if (!loaded) return
-    const checkMorningSummary = () => {
-      if (!settings.morningSummaryEnabled) return
-      const today = todayStr()
-      if (settings.lastSummaryShownDate === today) return
-      if (currentHHMM() < settings.morningSummaryTime) return
-      setSummaryAutoSpeak(settings.speakSummaryAloud)
-      setShowSummary(true)
-      const updated = { ...settings, lastSummaryShownDate: today }
-      setSettings(updated)
-      void saveSettings(updated)
-    }
-    checkMorningSummary()
-    const id = window.setInterval(checkMorningSummary, 60_000)
-    return () => window.clearInterval(id)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, settings.morningSummaryEnabled, settings.morningSummaryTime, settings.lastSummaryShownDate])
-
-  const handleAlarmFired = useCallback((id: string, firedAt: number) => {
-    setItems((prev) => {
-      const next = prev.map((i) => (i.id === id ? { ...i, alarmFiredAt: firedAt } : i))
-      const item = next.find((i) => i.id === id)
-      if (item) void dbSaveItem(item)
-      return next
-    })
-  }, [])
-
-  const { activeAlerts, dismiss } = useAlarms(items, handleAlarmFired)
-
-  const updateSettings = (next: AppSettings) => {
+  const updateSettings = useCallback((next: AppSettings) => {
     setSettings(next)
     void saveSettings(next)
-  }
+  }, [])
 
-  const handleNewItem = () => {
-    setFormState({
-      mode: 'new',
-      draft: createEmptyItem({
-        alarmSound: settings.defaultAlarmSound,
-        alarmMinutesBefore: settings.defaultAlarmMinutesBefore
+  const handleScheduledShown = useCallback(
+    (patch: Partial<AppSettings>) => {
+      setSettings((prev) => {
+        const next = { ...prev, ...patch }
+        void saveSettings(next)
+        return next
       })
-    })
+    },
+    []
+  )
+
+  const { current: autoSummary, dequeue } = useSummaryScheduler(settings, loaded, handleScheduledShown)
+
+  const activeSummary = manualSummary ?? autoSummary
+
+  const closeSummary = () => {
+    if (manualSummary) {
+      setManualSummary(null)
+    } else {
+      dequeue()
+    }
   }
 
-  const handleVoiceDraft = (draft: AgendaItem, rawTranscript: string) => {
+  const handleNewExpense = () => {
+    setFormState({ mode: 'new', draft: createEmptyExpense() })
+  }
+
+  const handleVoiceDraft = (draft: Expense, rawTranscript: string) => {
     setFormState({ mode: 'new', draft, transcript: rawTranscript })
   }
 
-  const handleEditItem = (item: AgendaItem) => {
-    setFormState({ mode: 'edit', draft: item })
+  const handleEditExpense = (expense: Expense) => {
+    setFormState({ mode: 'edit', draft: expense })
   }
 
-  const handleDeleteItem = async (item: AgendaItem) => {
-    if (!window.confirm(`Eliminare "${item.title}"?`)) return
-    await dbDeleteItem(item.id)
-    setItems((prev) => prev.filter((i) => i.id !== item.id))
+  const handleDeleteExpense = async (expense: Expense) => {
+    if (!window.confirm(`Eliminare la spesa "${expense.description}" di ${expense.amount.toFixed(2)} €?`)) return
+    await dbDeleteExpense(expense.id)
+    setExpenses((prev) => prev.filter((e) => e.id !== expense.id))
   }
 
-  const handleToggleDone = async (item: AgendaItem) => {
-    const updated = { ...item, done: !item.done, updatedAt: Date.now() }
-    await dbSaveItem(updated)
-    setItems((prev) => prev.map((i) => (i.id === item.id ? updated : i)))
+  const handleResetData = async () => {
+    if (!window.confirm('Cancellare definitivamente tutte le spese registrate?')) return
+    for (const e of expenses) {
+      await dbDeleteExpense(e.id)
+    }
+    setExpenses([])
   }
 
-  const handleFormSubmit = async (payload: ItemFormSubmitPayload) => {
-    const { item, newAttachments, removedAttachmentIds, voiceNoteChange, voiceNoteDuration } = payload
-
-    for (const { meta, file } of newAttachments) {
-      await saveAttachmentBlob(meta.id, file)
-    }
-    for (const id of removedAttachmentIds) {
-      await deleteAttachmentBlob(id)
-    }
-
-    let voiceNoteId = item.voiceNoteId
-    let voiceDuration = item.voiceNoteDuration
-    if (voiceNoteChange === null) {
-      if (item.voiceNoteId) await deleteVoiceNoteBlob(item.voiceNoteId)
-      voiceNoteId = null
-      voiceDuration = null
-    } else if (voiceNoteChange instanceof Blob) {
-      const id = voiceNoteId ?? crypto.randomUUID()
-      await saveVoiceNoteBlob(id, voiceNoteChange)
-      voiceNoteId = id
-      voiceDuration = voiceNoteDuration
-    }
-
-    const finalItem: AgendaItem = { ...item, voiceNoteId, voiceNoteDuration: voiceDuration }
-    await dbSaveItem(finalItem)
-    setItems((prev) => {
-      const exists = prev.some((i) => i.id === finalItem.id)
-      return exists ? prev.map((i) => (i.id === finalItem.id ? finalItem : i)) : [...prev, finalItem]
+  const handleFormSubmit = async (expense: Expense) => {
+    await dbSaveExpense(expense)
+    setExpenses((prev) => {
+      const exists = prev.some((e) => e.id === expense.id)
+      return exists ? prev.map((e) => (e.id === expense.id ? expense : e)) : [...prev, expense]
     })
     setFormState({ mode: 'closed' })
   }
 
-  const filters: { id: ListFilter; label: string }[] = [
-    { id: 'prossimi', label: 'Prossimi' },
-    { id: 'oggi', label: 'Oggi' },
-    { id: 'note', label: 'Note' },
-    { id: 'completati', label: 'Completati' },
-    { id: 'tutti', label: 'Tutti' }
-  ]
-
   return (
     <div className="app-shell">
-      <Header onOpenSettings={() => setShowSettings(true)} onOpenSummary={() => { setSummaryAutoSpeak(false); setShowSummary(true) }} />
-
-      <ActiveAlertsBanner alerts={activeAlerts} onDismiss={dismiss} />
+      <Header onOpenSettings={() => setShowSettings(true)} onOpenSummary={() => setShowSummaryChooser(true)} />
 
       <main className="app-main">
-        <VoiceCommandBar settings={settings} onDraftReady={handleVoiceDraft} />
-
-        <div className="filter-tabs">
-          {filters.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              className={filter === f.id ? 'filter-tab active' : 'filter-tab'}
-              onClick={() => setFilter(f.id)}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+        <VoiceExpenseBar onDraftReady={handleVoiceDraft} />
 
         {loaded ? (
-          <ItemList items={items} filter={filter} onEdit={handleEditItem} onDelete={handleDeleteItem} onToggleDone={handleToggleDone} />
+          <Dashboard expenses={expenses} onEdit={handleEditExpense} onDelete={handleDeleteExpense} />
         ) : (
           <p className="hint">Caricamento…</p>
         )}
       </main>
 
-      <button type="button" className="fab" aria-label="Nuovo appuntamento o nota" onClick={handleNewItem}>
+      <button type="button" className="fab" aria-label="Nuova spesa" onClick={handleNewExpense}>
         +
       </button>
 
       {formState.mode !== 'closed' && (
         <div className="modal-overlay" onClick={() => setFormState({ mode: 'closed' })}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>{formState.mode === 'edit' ? 'Modifica' : 'Nuovo elemento'}</h2>
-            {formState.mode === 'new' && formState.transcript && (
-              <p className="hint voice-transcript-hint">🎙️ Hai detto: “{formState.transcript}” — controlla i campi qui sotto prima di salvare.</p>
-            )}
-            <ItemForm
+            <h2>{formState.mode === 'edit' ? 'Modifica spesa' : 'Nuova spesa'}</h2>
+            <ExpenseForm
               initial={formState.draft}
+              familyMembers={settings.familyMembers}
+              voiceHint={formState.mode === 'new' ? formState.transcript : undefined}
               onCancel={() => setFormState({ mode: 'closed' })}
               onSubmit={handleFormSubmit}
-              submitLabel={formState.mode === 'edit' ? 'Salva modifiche' : 'Aggiungi'}
+              submitLabel={formState.mode === 'edit' ? 'Salva modifiche' : 'Aggiungi spesa'}
             />
           </div>
         </div>
       )}
 
-      {showSummary && (
-        <MorningSummary items={items} onClose={() => setShowSummary(false)} autoSpeak={summaryAutoSpeak} />
+      {showSummaryChooser && (
+        <div className="modal-overlay" onClick={() => setShowSummaryChooser(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>📊 Riepiloghi</h2>
+            <div className="summary-choice-list">
+              {SUMMARY_CHOICES.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className="btn secondary summary-choice-btn"
+                  onClick={() => {
+                    setManualSummary(c.id)
+                    setShowSummaryChooser(false)
+                  }}
+                >
+                  {c.emoji} {c.label}
+                </button>
+              ))}
+            </div>
+            <div className="form-actions">
+              <button type="button" className="btn primary" onClick={() => setShowSummaryChooser(false)}>
+                Chiudi
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
-      {showSettings && <SettingsPanel settings={settings} onChange={updateSettings} onClose={() => setShowSettings(false)} />}
+      {activeSummary && (
+        <SummaryModal
+          kind={activeSummary}
+          expenses={expenses}
+          monthlyBudget={settings.monthlyBudget}
+          onClose={closeSummary}
+          autoSpeak={!manualSummary && settings.speakSummaryAloud}
+        />
+      )}
+
+      {showSettings && (
+        <SettingsPanel
+          settings={settings}
+          onChange={updateSettings}
+          onClose={() => setShowSettings(false)}
+          onResetData={handleResetData}
+        />
+      )}
     </div>
   )
 }

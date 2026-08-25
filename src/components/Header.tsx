@@ -6,12 +6,12 @@ interface Props {
 export function Header({ onOpenSettings, onOpenSummary }: Props) {
   return (
     <header className="app-header">
-      <h1>🗓️ Agenda Vocale</h1>
+      <h1>💶 Spese Familiari</h1>
       <div className="header-actions">
-        <button type="button" className="btn secondary" onClick={onOpenSummary}>
-          ☀️ Riepilogo
+        <button type="button" className="icon-btn" title="Riepiloghi" onClick={onOpenSummary}>
+          📊
         </button>
-        <button type="button" className="icon-btn" aria-label="Impostazioni" onClick={onOpenSettings}>
+        <button type="button" className="icon-btn" title="Impostazioni" onClick={onOpenSettings}>
           ⚙️
         </button>
       </div>

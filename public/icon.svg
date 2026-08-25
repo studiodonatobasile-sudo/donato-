@@ -1,11 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <rect width="128" height="128" rx="28" fill="#4f46e5"/>
-  <rect x="24" y="30" width="80" height="72" rx="10" fill="#eef2ff"/>
-  <rect x="24" y="30" width="80" height="20" rx="10" fill="#4338ca"/>
-  <rect x="38" y="18" width="8" height="20" rx="4" fill="#312e81"/>
-  <rect x="82" y="18" width="8" height="20" rx="4" fill="#312e81"/>
-  <circle cx="64" cy="76" r="16" fill="#4f46e5"/>
-  <path d="M64 68v9l6 5" stroke="#eef2ff" stroke-width="3" stroke-linecap="round" fill="none"/>
-  <circle cx="42" cy="66" r="4" fill="#a5b4fc"/>
-  <circle cx="42" cy="82" r="4" fill="#a5b4fc"/>
+  <rect x="20" y="40" width="88" height="64" rx="10" fill="#eef2ff"/>
+  <rect x="20" y="40" width="88" height="20" rx="10" fill="#4338ca"/>
+  <rect x="30" y="90" width="20" height="5" rx="2.5" fill="#a5b4fc"/>
+  <rect x="78" y="90" width="20" height="5" rx="2.5" fill="#a5b4fc"/>
+  <circle cx="64" cy="74" r="15" fill="#4f46e5" stroke="#eef2ff" stroke-width="3"/>
+  <text x="64" y="80" text-anchor="middle" font-family="system-ui, sans-serif" font-size="17" font-weight="700" fill="#eef2ff">€</text>
 </svg>

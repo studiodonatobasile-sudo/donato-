@@ -7,7 +7,7 @@ on:
     # e puo' essere rimosso una volta che main include questo workflow.
     branches:
       - main
-      - claude/appointment-tracking-app-d7cn64
+      - claude/family-expense-dashboard-hq7u7d
   workflow_dispatch:
 
 permissions:

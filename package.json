@@ -1,9 +1,9 @@
 {
-  "name": "agenda-vocale",
+  "name": "spese-familiari",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "App per tenere traccia di appuntamenti e note, con registrazione vocale, allegati, avvisi sonori e riepilogo mattutino.",
+  "description": "App per il monitoraggio quotidiano delle spese familiari, con annotazione vocale, categorizzazione automatica e riepiloghi giornalieri, settimanali e mensili con grafici.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

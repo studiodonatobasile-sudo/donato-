@@ -15,10 +15,10 @@ export default defineConfig(({ command }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       manifest: {
-        name: 'Agenda Vocale',
-        short_name: 'Agenda',
+        name: 'Spese Familiari',
+        short_name: 'Spese',
         description:
-          'Tieni traccia di appuntamenti e note, con registrazioni vocali, allegati e avvisi sonori.',
+          'Monitora le spese quotidiane della famiglia con annotazione vocale, categorizzazione automatica e riepiloghi con grafici.',
         theme_color: '#4f46e5',
         background_color: '#0f172a',
         display: 'standalone',
