@@ -40,6 +40,8 @@ export interface AgendaItem {
   alarmFiredAt: number | null
   /** L'utente ha chiuso/riconosciuto manualmente l'avviso */
   alarmDismissed: boolean
+  /** ID dell'evento su Google Calendar corrispondente, se sincronizzato */
+  googleEventId: string | null
 }
 
 export interface AppSettings {
@@ -51,6 +53,14 @@ export interface AppSettings {
   notificationsRequested: boolean
   lastSummaryShownDate: string | null
   speakSummaryAloud: boolean
+  /** Client ID OAuth di Google (creato dall'utente su Google Cloud Console) */
+  googleClientId: string
+  /** L'utente ha completato almeno una volta la connessione a Google Calendar */
+  googleConnected: boolean
+  /** Token di sincronizzazione incrementale restituito da Google Calendar */
+  googleSyncToken: string | null
+  /** Timestamp dell'ultima sincronizzazione riuscita con Google Calendar */
+  googleLastSyncAt: number | null
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -61,7 +71,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
   defaultAlarmMinutesBefore: 0,
   notificationsRequested: false,
   lastSummaryShownDate: null,
-  speakSummaryAloud: false
+  speakSummaryAloud: false,
+  googleClientId: '',
+  googleConnected: false,
+  googleSyncToken: null,
+  googleLastSyncAt: null
 }
 
 export function createEmptyItem(overrides: Partial<AgendaItem> = {}): AgendaItem {
@@ -85,6 +99,7 @@ export function createEmptyItem(overrides: Partial<AgendaItem> = {}): AgendaItem
     updatedAt: now,
     alarmFiredAt: null,
     alarmDismissed: false,
+    googleEventId: null,
     ...overrides
   }
 }
