@@ -1,0 +1,25 @@
+{
+  "name": "agenda-vocale",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "App per tenere traccia di appuntamenti e note, con registrazione vocale, allegati, avvisi sonori e riepilogo mattutino.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "idb": "^8.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vite-plugin-pwa": "^0.20.5"
+  }
+}
