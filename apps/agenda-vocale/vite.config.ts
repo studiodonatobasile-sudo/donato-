@@ -2,9 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// Pubblicata su GitHub Pages come "project page": va servita da /donato-/,
-// non dalla radice del dominio. In sviluppo (`vite`) resta invece '/'.
-const BASE_PATH = '/donato-/'
+// Pubblicata su GitHub Pages insieme ad altre app dello stesso sito, sotto
+// /donato-/agenda-vocale/. In sviluppo (`vite`) resta invece '/'.
+const BASE_PATH = '/donato-/agenda-vocale/'
 
 // https://vite.dev/config/
 export default defineConfig(({ command }) => ({
@@ -15,10 +15,10 @@ export default defineConfig(({ command }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       manifest: {
-        name: 'Spese Familiari',
-        short_name: 'Spese',
+        name: 'Agenda Vocale',
+        short_name: 'Agenda',
         description:
-          'Monitora le spese quotidiane della famiglia con annotazione vocale, categorizzazione automatica e riepiloghi con grafici.',
+          'Tieni traccia di appuntamenti e note, con registrazioni vocali, allegati e avvisi sonori.',
         theme_color: '#4f46e5',
         background_color: '#0f172a',
         display: 'standalone',

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="description" content="Le app di famiglia: agenda vocale e monitoraggio delle spese familiari." />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%234f46e5%22/><text x=%2250%22 y=%2266%22 font-size=%2258%22 text-anchor=%22middle%22>🏠</text></svg>"
+    />
+    <title>App di famiglia</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --bg-card: #1e293b;
+        --border: #334155;
+        --text: #f1f5f9;
+        --text-muted: #94a3b8;
+        --primary: #6366f1;
+        --primary-hover: #818cf8;
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        justify-content: center;
+      }
+
+      .page {
+        width: 100%;
+        max-width: 640px;
+        padding: 48px 20px 32px;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 32px;
+      }
+
+      header h1 {
+        margin: 0 0 8px;
+        font-size: 1.6rem;
+      }
+
+      header p {
+        margin: 0;
+        color: var(--text-muted);
+      }
+
+      .app-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .app-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+        text-decoration: none;
+        color: var(--text);
+        transition: border-color 0.15s, transform 0.15s;
+      }
+
+      .app-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+      }
+
+      .app-icon {
+        flex-shrink: 0;
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.7rem;
+      }
+
+      .app-info {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .app-info h2 {
+        margin: 0 0 4px;
+        font-size: 1.1rem;
+      }
+
+      .app-info p {
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      .app-arrow {
+        flex-shrink: 0;
+        color: var(--text-muted);
+        font-size: 1.3rem;
+      }
+
+      footer {
+        text-align: center;
+        margin-top: 40px;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <h1>🏠 App di famiglia</h1>
+        <p>Scegli l'app da aprire.</p>
+      </header>
+
+      <div class="app-list">
+        <a class="app-card" href="./spese-familiari/">
+          <span class="app-icon">💶</span>
+          <span class="app-info">
+            <h2>Spese Familiari</h2>
+            <p>Monitoraggio quotidiano delle spese, con annotazione vocale e riepiloghi con grafici.</p>
+          </span>
+          <span class="app-arrow">›</span>
+        </a>
+
+        <a class="app-card" href="./agenda-vocale/">
+          <span class="app-icon">🗓️</span>
+          <span class="app-info">
+            <h2>Agenda Vocale</h2>
+            <p>Appuntamenti e note con comandi vocali, allegati e avvisi sonori.</p>
+          </span>
+          <span class="app-arrow">›</span>
+        </a>
+      </div>
+
+      <footer>Tutti i dati restano sul dispositivo: nessun server, nessun account.</footer>
+    </div>
+  </body>
+</html>

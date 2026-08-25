@@ -28,8 +28,30 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
-      - run: npm run build
+          cache-dependency-path: apps/*/package-lock.json
+
+      # Il sito pubblica più app indipendenti sotto lo stesso dominio, ognuna
+      # nella propria sottocartella: /donato-/<nome-app>/. Ogni app ha il
+      # proprio package.json/vite.config.ts e viene compilata separatamente.
+      - name: Build Spese Familiari
+        working-directory: apps/spese-familiari
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build Agenda Vocale
+        working-directory: apps/agenda-vocale
+        run: |
+          npm ci
+          npm run build
+
+      - name: Assembla il sito
+        run: |
+          mkdir -p dist
+          cp -r site/. dist/
+          cp -r apps/spese-familiari/dist dist/spese-familiari
+          cp -r apps/agenda-vocale/dist dist/agenda-vocale
+
       - uses: actions/configure-pages@v5
         with:
           # Necessario esplicitamente: dalla v5 l'azione non abilita piu'

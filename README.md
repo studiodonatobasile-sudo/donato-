@@ -1,72 +1,64 @@
-# 💶 Spese Familiari
+# App di famiglia
 
-App web (PWA) per il monitoraggio quotidiano delle spese familiari, con annotazione
-vocale, riscontro automatico della categoria di spesa e riepiloghi periodici con
-grafici. I dati restano **interamente sul dispositivo** (IndexedDB del browser): non
-c'è un server, nessun account, nessun dato inviato altrove.
+Sito con più app web (PWA) indipendenti per la famiglia, pubblicato su GitHub Pages.
+Ogni app vive nella propria sottocartella, ha il proprio codice e i propri dati (in
+IndexedDB, solo sul dispositivo): non c'è un server, nessun account, nessun dato
+condiviso tra le app o inviato altrove.
 
-## Funzionalità
+Una landing page (`site/`) elenca le app disponibili e rimanda a ciascuna.
 
-- **Annotazione rapida delle spese**: importo, descrizione, data/ora e — opzionale —
-  quale membro della famiglia ha speso.
-- **Comando vocale**: tocca il microfono e annuncia la spesa, ad es.:
-  - _"15 euro spesa al supermercato"_
-  - _"ho pagato 8 euro e 50 per la benzina"_
+## App disponibili
 
-  L'importo e la descrizione vengono estratti automaticamente e mostrati in un
-  modulo precompilato **da confermare o correggere** prima di salvare (il
-  riconoscimento vocale non è infallibile).
-- **Riscontro automatico della categoria**: la descrizione viene analizzata con un
-  elenco di parole chiave in italiano e classificata in una delle 8 categorie
-  (Alimentari, Trasporti, Casa e bollette, Salute, Svago, Abbigliamento, Istruzione e
-  bambini, Altro). La categoria proposta è sempre modificabile manualmente.
-- **Dashboard con grafici**: vista Oggi / Settimana / Mese con totale speso,
-  variazione rispetto al periodo precedente, ripartizione per categoria (grafico a
-  ciambella) e andamento giornaliero (grafico a barre), oltre all'elenco dei
-  movimenti con modifica ed eliminazione.
-- **Riepiloghi automatici**: ogni giorno alle 21:00 (personalizzabile) compare un
-  riepilogo giornaliero; la domenica alle 21:00 anche il riepilogo settimanale;
-  l'ultimo giorno del mese alle 21:00 anche il riepilogo mensile. Ogni riepilogo
-  mostra il totale, la variazione rispetto al periodo precedente e i grafici, e può
-  essere letto ad alta voce. I riepiloghi sono anche richiamabili in ogni momento
-  dal pulsante 📊.
-- **Budget mensile opzionale**: imposta un obiettivo di spesa mensile per vedere a
-  colpo d'occhio quanto ne hai già usato nel riepilogo mensile.
-- **Notifiche del browser**: facoltative (impostazioni → Abilita notifiche), avvisano
-  quando un riepilogo è pronto anche se la scheda non è in primo piano.
+- **[Spese Familiari](apps/spese-familiari/README.md)** — monitoraggio quotidiano
+  delle spese di famiglia, annotazione vocale con riscontro automatico della
+  categoria, riepiloghi giornalieri/settimanali/mensili con grafici.
+- **[Agenda Vocale](apps/agenda-vocale/README.md)** — appuntamenti e note con
+  comandi vocali, allegati e avvisi sonori.
 
-## Requisiti del browser
+## Struttura del repository
 
-- Il **riconoscimento vocale** richiede Chrome, Edge o un browser basato su Chromium
-  (desktop o Android). Safari/Firefox non lo supportano ancora pienamente.
-- Le **notifiche del browser** sono facoltative e funzionano solo in contesti sicuri
-  (`https://` o `localhost`).
+```
+site/                    landing page statica (nessuna build)
+apps/
+  spese-familiari/        app React + Vite indipendente
+  agenda-vocale/           app React + Vite indipendente
+.github/workflows/        build delle app + pubblicazione su GitHub Pages
+```
 
-> ⚠️ Come ogni app web senza backend, i riepiloghi periodici vengono mostrati quando
-> l'app è aperta all'orario impostato (o alla prima apertura successiva, per
-> recuperare quelli persi). Per non perderli conviene installarla sulla schermata
-> Home/Desktop (il browser mostrerà l'opzione "Installa app") e lasciarla aperta.
-
-## Sviluppo
+Ogni cartella in `apps/` è un progetto Vite a sé stante, con il proprio
+`package.json`. Per lavorare su una singola app:
 
 ```bash
+cd apps/spese-familiari   # oppure apps/agenda-vocale
 npm install
 npm run dev
 ```
 
 ## Build di produzione
 
+Il workflow di deploy compila entrambe le app e le assembla insieme alla landing
+page in un'unica cartella `dist/`, pubblicata su GitHub Pages come:
+
+- `/` → landing page
+- `/spese-familiari/` → app Spese Familiari
+- `/agenda-vocale/` → app Agenda Vocale
+
+Per riprodurre la build localmente:
+
 ```bash
-npm run build
-npm run preview
+(cd apps/spese-familiari && npm install && npm run build)
+(cd apps/agenda-vocale && npm install && npm run build)
+mkdir -p dist
+cp -r site/. dist/
+cp -r apps/spese-familiari/dist dist/spese-familiari
+cp -r apps/agenda-vocale/dist dist/agenda-vocale
 ```
 
-## Stack tecnico
+## Aggiungere una nuova app
 
-- React + TypeScript + Vite
-- IndexedDB (tramite `idb`) per le spese e le impostazioni
-- Web Speech API (`SpeechRecognition` / `SpeechSynthesis`) per l'annotazione vocale e
-  la lettura dei riepiloghi
-- Grafici SVG disegnati a mano (ciambella per categoria, barre per l'andamento
-  giornaliero), nessuna libreria esterna
-- `vite-plugin-pwa` per l'installabilità come app
+1. Crea una nuova cartella in `apps/<nome-app>/` con il proprio progetto Vite.
+2. Imposta `BASE_PATH = '/donato-/<nome-app>/'` nel suo `vite.config.ts` (in build;
+   in sviluppo resta `'/'`).
+3. Aggiungi una card in `site/index.html` che rimanda a `./<nome-app>/`.
+4. Aggiungi i passaggi di build e copia per la nuova app nel workflow
+   `.github/workflows/deploy-pages.yml`.
