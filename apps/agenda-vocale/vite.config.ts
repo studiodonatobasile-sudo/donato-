@@ -2,9 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// Pubblicata su GitHub Pages come "project page": va servita da /donato-/,
-// non dalla radice del dominio. In sviluppo (`vite`) resta invece '/'.
-const BASE_PATH = '/donato-/'
+// Pubblicata su GitHub Pages insieme ad altre app dello stesso sito, sotto
+// /donato-/agenda-vocale/. In sviluppo (`vite`) resta invece '/'.
+const BASE_PATH = '/donato-/agenda-vocale/'
 
 // https://vite.dev/config/
 export default defineConfig(({ command }) => ({
