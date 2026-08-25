@@ -1,13 +1,20 @@
 import { ALARM_SOUNDS, type AlarmSoundId, type AppSettings } from '../types'
 import { playAlertSound } from '../utils/audioAlerts'
+import type { UseGoogleCalendarResult } from '../hooks/useGoogleCalendar'
 
 interface Props {
   settings: AppSettings
   onChange: (settings: AppSettings) => void
   onClose: () => void
+  google: UseGoogleCalendarResult
 }
 
-export function SettingsPanel({ settings, onChange, onClose }: Props) {
+function formatSyncTime(ts: number | null): string {
+  if (!ts) return 'mai'
+  return new Date(ts).toLocaleString('it-IT', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
+}
+
+export function SettingsPanel({ settings, onChange, onClose, google }: Props) {
   const notificationSupported = 'Notification' in window
   const permission = notificationSupported ? Notification.permission : 'unsupported'
 
@@ -91,6 +98,48 @@ export function SettingsPanel({ settings, onChange, onClose }: Props) {
             >
               Abilita notifiche
             </button>
+          )}
+        </div>
+
+        <div className="field">
+          <label>📅 Google Calendar</label>
+          <p className="hint">
+            Sincronizza automaticamente gli appuntamenti con data con il tuo Google Calendar. Richiede un
+            Client ID OAuth creato su Google Cloud Console (gratuito) — vedi le istruzioni nel README del
+            progetto.
+          </p>
+          {!google.connected && (
+            <input
+              type="text"
+              placeholder="Client ID (xxxxxxxx.apps.googleusercontent.com)"
+              value={settings.googleClientId}
+              onChange={(e) => onChange({ ...settings, googleClientId: e.target.value })}
+            />
+          )}
+          {google.error && <p className="error-text">{google.error}</p>}
+          <div className="alarm-options" style={{ marginTop: 8 }}>
+            {!google.connected ? (
+              <button type="button" className="btn secondary" disabled={google.connecting} onClick={() => void google.connect()}>
+                {google.connecting ? 'Connessione…' : 'Connetti Google Calendar'}
+              </button>
+            ) : (
+              <>
+                <button type="button" className="btn secondary small" disabled={google.syncing} onClick={() => void google.syncNow()}>
+                  {google.syncing ? 'Sincronizzo…' : '🔄 Sincronizza ora'}
+                </button>
+                <button type="button" className="btn secondary small" onClick={google.disconnect}>
+                  Disconnetti
+                </button>
+              </>
+            )}
+          </div>
+          {google.connected && (
+            <p className="hint">✅ Connesso. Ultima sincronizzazione: {formatSyncTime(settings.googleLastSyncAt)}.</p>
+          )}
+          {settings.googleConnected && !google.connected && !google.connecting && (
+            <p className="hint">
+              ⚠️ La sessione con Google non è più attiva: tocca "Connetti Google Calendar" per riautorizzare.
+            </p>
           )}
         </div>
 

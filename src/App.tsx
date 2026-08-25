@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   deleteAttachmentBlob,
   deleteItem as dbDeleteItem,
@@ -13,6 +13,8 @@ import {
 import { createEmptyItem, DEFAULT_SETTINGS, type AgendaItem, type AppSettings } from './types'
 import { todayStr } from './utils/dateUtils'
 import { useAlarms } from './hooks/useAlarms'
+import { useGoogleCalendar } from './hooks/useGoogleCalendar'
+import { eventToItemFields, getAgendaIdFromEvent, type GoogleEvent } from './utils/googleCalendar'
 import { Header } from './components/Header'
 import { VoiceCommandBar } from './components/VoiceCommandBar'
 import { ItemList, type ListFilter } from './components/ItemList'
@@ -85,6 +87,51 @@ export default function App() {
     void saveSettings(next)
   }
 
+  const itemsRef = useRef<AgendaItem[]>(items)
+  useEffect(() => {
+    itemsRef.current = items
+  }, [items])
+
+  const handleRemoteEvents = useCallback((events: GoogleEvent[]) => {
+    const next = [...itemsRef.current]
+    const toSave: AgendaItem[] = []
+    const toDeleteIds: string[] = []
+
+    for (const event of events) {
+      if (event.status === 'cancelled') {
+        const idx = next.findIndex((i) => i.googleEventId === event.id)
+        if (idx !== -1) {
+          toDeleteIds.push(next[idx].id)
+          next.splice(idx, 1)
+        }
+        continue
+      }
+
+      const fields = eventToItemFields(event)
+      const agendaId = getAgendaIdFromEvent(event)
+      let idx = agendaId ? next.findIndex((i) => i.id === agendaId) : -1
+      if (idx === -1) idx = next.findIndex((i) => i.googleEventId === event.id)
+
+      if (idx !== -1) {
+        const updated: AgendaItem = { ...next[idx], ...fields, googleEventId: event.id, updatedAt: Date.now() }
+        next[idx] = updated
+        toSave.push(updated)
+      } else {
+        // Evento creato direttamente su Google Calendar: lo importiamo come nuovo appuntamento.
+        const created = createEmptyItem({ ...fields, type: 'appuntamento', googleEventId: event.id })
+        next.push(created)
+        toSave.push(created)
+      }
+    }
+
+    if (toSave.length === 0 && toDeleteIds.length === 0) return
+    itemsRef.current = next
+    setItems(next)
+    void Promise.all([...toSave.map((it) => dbSaveItem(it)), ...toDeleteIds.map((id) => dbDeleteItem(id))])
+  }, [])
+
+  const google = useGoogleCalendar(settings, updateSettings, handleRemoteEvents)
+
   const handleNewItem = () => {
     setFormState({
       mode: 'new',
@@ -105,6 +152,7 @@ export default function App() {
 
   const handleDeleteItem = async (item: AgendaItem) => {
     if (!window.confirm(`Eliminare "${item.title}"?`)) return
+    await google.pushDelete(item)
     await dbDeleteItem(item.id)
     setItems((prev) => prev.filter((i) => i.id !== item.id))
   }
@@ -138,7 +186,10 @@ export default function App() {
       voiceDuration = voiceNoteDuration
     }
 
-    const finalItem: AgendaItem = { ...item, voiceNoteId, voiceNoteDuration: voiceDuration }
+    let finalItem: AgendaItem = { ...item, voiceNoteId, voiceNoteDuration: voiceDuration }
+    if (finalItem.date) {
+      finalItem = await google.pushItem(finalItem)
+    }
     await dbSaveItem(finalItem)
     setItems((prev) => {
       const exists = prev.some((i) => i.id === finalItem.id)
@@ -209,7 +260,9 @@ export default function App() {
         <MorningSummary items={items} onClose={() => setShowSummary(false)} autoSpeak={summaryAutoSpeak} />
       )}
 
-      {showSettings && <SettingsPanel settings={settings} onChange={updateSettings} onClose={() => setShowSettings(false)} />}
+      {showSettings && (
+        <SettingsPanel settings={settings} onChange={updateSettings} onClose={() => setShowSettings(false)} google={google} />
+      )}
     </div>
   )
 }

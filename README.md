@@ -25,6 +25,39 @@ browser): non c'e' un server, nessun account, nessun dato inviato altrove.
   impostato (08:00 di default, personalizzabile), compare un riepilogo con gli
   appuntamenti/note del giorno, gli elementi scaduti non completati e le note senza
   data. Può anche essere letto ad alta voce.
+- **Sincronizzazione con Google Calendar** (facoltativa): gli appuntamenti/note con
+  data si creano, aggiornano ed eliminano automaticamente anche sul tuo Google
+  Calendar, e viceversa (le modifiche fatte direttamente su Google Calendar vengono
+  importate nell'app a ogni apertura e ogni pochi minuti mentre resta aperta). Richiede
+  una configurazione una tantum, vedi sotto.
+
+## Collegare Google Calendar
+
+La sincronizzazione richiede un Client ID OAuth tutto tuo (gratuito), perché l'app è
+puramente client-side e non ha un server che possa custodire credenziali condivise.
+Va creato una sola volta:
+
+1. Vai su [Google Cloud Console](https://console.cloud.google.com/) e crea un nuovo
+   progetto (qualsiasi nome va bene).
+2. **APIs & Services → Library**: cerca **"Google Calendar API"** e premi **Enable**.
+3. **APIs & Services → OAuth consent screen**: tipo utente **"External"**, dai un nome
+   all'app (es. "Agenda Vocale") e inserisci la tua email come contatto. Lo stato di
+   pubblicazione può restare **"Testing"** — sei automaticamente incluso come utente di
+   test come proprietario del progetto, non serve la revisione di Google.
+4. **APIs & Services → Credentials → Create Credentials → OAuth client ID**: tipo
+   applicazione **"Web application"**. Sotto **"Authorized JavaScript origins"** aggiungi
+   l'indirizzo esatto da cui apri l'app (es. `https://tuonome.github.io`, senza il
+   percorso `/nome-repo/` finale).
+5. Copia il **Client ID** generato (una stringa che finisce in
+   `.apps.googleusercontent.com`) e incollalo nell'app, in **Impostazioni → Google
+   Calendar**, poi tocca **"Connetti Google Calendar"** e autorizza con il tuo account.
+
+> ⚠️ Il token di accesso resta solo in memoria nel browser (mai salvato su disco) e
+> scade dopo circa un'ora: l'app prova a rinnovarlo automaticamente in silenzio quando
+> riapri la pagina, ma se il browser non ha più una sessione Google attiva dovrai
+> toccare di nuovo "Connetti Google Calendar". Anche per questo la sincronizzazione da
+> Google verso l'app avviene solo mentre l'app è aperta (al caricamento e ogni ~4
+> minuti), non in tempo reale in background.
 
 ## Requisiti del browser
 
@@ -65,3 +98,4 @@ npm run preview
 - `MediaRecorder` per le note vocali
 - Web Audio API per i suoni di avviso sintetizzati (nessun file audio da scaricare)
 - `vite-plugin-pwa` per l'installabilità come app
+- Google Identity Services + Google Calendar API v3 per la sincronizzazione facoltativa

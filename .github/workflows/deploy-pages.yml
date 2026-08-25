@@ -1,26 +1,29 @@
 name: Deploy su GitHub Pages
 
+# Pubblica la build compilata sul branch gh-pages ad ogni push su main.
+# Nota: non usiamo il flusso "Pages tramite Actions" (configure-pages +
+# deploy-pages) perche' la creazione del sito Pages via API viene rifiutata
+# dal token automatico del workflow ("Resource not accessible by
+# integration") finche' il sito non esiste gia'. Il metodo "Deploy from a
+# branch" invece funziona subito: basta selezionare una volta, in Settings >
+# Pages, Source = "Deploy from a branch", branch = gh-pages, cartella = /
+# (root). Da quel momento in poi questo workflow aggiorna il sito ad ogni
+# push, senza bisogno di altre chiamate API riservate.
 on:
   push:
-    # "main" e' il trigger definitivo; il nome del branch di lavoro resta qui
-    # solo per pubblicare subito durante lo sviluppo prima del merge della PR
-    # e puo' essere rimosso una volta che main include questo workflow.
     branches:
       - main
-      - claude/appointment-tracking-app-d7cn64
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,21 +33,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - uses: actions/configure-pages@v5
+      - run: touch dist/.nojekyll
+      - uses: peaceiris/actions-gh-pages@v4
         with:
-          # Necessario esplicitamente: dalla v5 l'azione non abilita piu'
-          # Pages in automatico se non richiesto (default enablement: false).
-          enablement: true
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
