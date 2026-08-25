@@ -78,8 +78,12 @@ function extractDate(text: string): { date: string | null; remainder: string } {
   const oggi = text.match(/\boggi\b/i)
   const traGiorni = text.match(/tra\s+(\w+)\s+giorni/i)
   const numeric = text.match(/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/)
+  // Nota: il confine \b finale non va usato dopo una vocale accentata come
+  // "ì" (JS considera \w solo ASCII, quindi "\blunedì\b" non trova mai una
+  // corrispondenza) - si usa quindi un lookahead che richiede solo che non
+  // segua un'altra lettera ASCII.
   const weekdayMatch = text.match(
-    /\b(luned[ìi]|marted[ìi]|mercoled[ìi]|gioved[ìi]|venerd[ìi]|sabato|domenica)\b/i
+    /\b(luned[ìi]|marted[ìi]|mercoled[ìi]|gioved[ìi]|venerd[ìi]|sabato|domenica)(?![a-zA-Z])/i
   )
   const ilGiorno = text.match(/\bil\s+(\d{1,2})\b(?!\s*[:.]\d)/i)
 
@@ -143,13 +147,14 @@ function extractTime(text: string): { time: string | null; remainder: string } {
   const removed: RegExpMatchArray[] = []
   let time: string | null = null
 
+  const HOUR_WORD = 'una|due|tre|quattro|cinque|sei|sette|otto|nove|dieci|undici|dodici'
   const numericTime = text.match(/\balle\s+(\d{1,2})[:.](\d{2})\b/i)
   const oraSecca = text.match(/\balle\s+(\d{1,2})\b(?!\s*[:.]\d)/i)
   const eMezza = text.match(/\balle\s+(\d{1,2})\s+e\s+mezz[ao]\b/i)
   const eUnQuarto = text.match(/\balle\s+(\d{1,2})\s+e\s+un\s+quarto\b/i)
-  const wordTime = text.match(
-    /\balle\s+(una|due|tre|quattro|cinque|sei|sette|otto|nove|dieci|undici|dodici)\b(?!\s*e\s+mezz)/i
-  )
+  const wordEMezza = text.match(new RegExp(`\\balle\\s+(${HOUR_WORD})\\s+e\\s+mezz[ao]\\b`, 'i'))
+  const wordEUnQuarto = text.match(new RegExp(`\\balle\\s+(${HOUR_WORD})\\s+e\\s+un\\s+quarto\\b`, 'i'))
+  const wordTime = text.match(new RegExp(`\\balle\\s+(${HOUR_WORD})\\b(?!\\s*e\\s+(?:mezz|un\\s+quarto))`, 'i'))
   const pomeriggio = /pomeriggio|sera/i.test(text)
 
   const applyPeriod = (h: number): number => {
@@ -169,6 +174,14 @@ function extractTime(text: string): { time: string | null; remainder: string } {
     const h = applyPeriod(parseInt(eUnQuarto[1], 10))
     time = `${String(h).padStart(2, '0')}:15`
     removed.push(eUnQuarto)
+  } else if (wordEMezza) {
+    const h = applyPeriod(NUMBER_WORDS[wordEMezza[1].toLowerCase()] ?? 0)
+    time = `${String(h).padStart(2, '0')}:30`
+    removed.push(wordEMezza)
+  } else if (wordEUnQuarto) {
+    const h = applyPeriod(NUMBER_WORDS[wordEUnQuarto[1].toLowerCase()] ?? 0)
+    time = `${String(h).padStart(2, '0')}:15`
+    removed.push(wordEUnQuarto)
   } else if (wordTime) {
     const h = applyPeriod(NUMBER_WORDS[wordTime[1].toLowerCase()] ?? 0)
     time = `${String(h).padStart(2, '0')}:00`
@@ -197,10 +210,18 @@ function extractAlarm(text: string): {
   let alarmSound: AlarmSoundId | null = null
   let alarmMinutesBefore: number | null = null
 
+  // Permissivo di proposito: riconosce "avviso sonoro" o "sveglia" anche con
+  // articoli/preposizioni naturali davanti ("con l'avviso sonoro", "attiva la
+  // sveglia", "voglio l'allarme", ecc.), non solo la frase esatta "con avviso
+  // sonoro". Il comando va comunque sempre confermato dall'utente prima del
+  // salvataggio, quindi un riconoscimento troppo ampio e' preferibile a uno
+  // che lascia l'avviso disattivato quando l'utente lo ha chiesto a voce.
   const positive = text.match(
-    /\b(con\s+(un\s+)?(avviso|allarme)\s+sonoro|con\s+avviso|con\s+allarme|avvisami|suoneria|suona|con\s+sveglia)\b/i
+    /\b(?:con\s+)?(?:l['’]|un['’]?\s|il\s|la\s|lo\s|gli\s|le\s)?\s*(avviso\s+sonoro|allarme\s+sonoro|avviso\s+acustico|promemoria\s+sonoro|avvisami|notificami|suoneria|suona|sveglia|allarme|avviso)\b/i
   )
-  const negative = text.match(/\bsenza\s+(avviso|allarme)\b/i)
+  const negative = text.match(
+    /\bsenza\s+(?:l['’]\s?|un['’]?\s|il\s|la\s|lo\s|gli\s|le\s)?(avviso|allarme|sveglia)\b/i
+  )
 
   if (negative) {
     alarmEnabled = false
@@ -250,7 +271,7 @@ function extractType(text: string): { type: ItemType; remainder: string } {
 }
 
 const FILLER_WORDS =
-  /\b(crea|aggiungi|nuovo|nuova|imposta|per il|per|il|la|alle|con|di|un|una|dal|del)\b/gi
+  /\b(crea|aggiungi|nuovo|nuova|imposta|attiva|voglio|per il|per|il|lo|la|gli|le|alle|con|di|un|una|dal|del)\b/gi
 
 /**
  * Interpreta un comando vocale in italiano e ne estrae i campi strutturati.
@@ -275,7 +296,10 @@ export function parseVoiceCommand(transcript: string): ParsedCommand {
 
   let title = text.replace(FILLER_WORDS, ' ').replace(/\s+/g, ' ').trim()
   if (title.length === 0) {
-    title = original
+    // La frase e' stata riconosciuta interamente come tipo/data/ora/avviso
+    // (es. "appuntamento domani alle 15 con la sveglia"): meglio un titolo
+    // generico e pulito che il testo grezzo non ripulito.
+    title = typeResult.type === 'nota' ? 'Nota' : 'Appuntamento'
   }
   title = title.charAt(0).toUpperCase() + title.slice(1)
 
