@@ -17,13 +17,17 @@ c'è un server, nessun account, nessun dato inviato altrove.
   modulo precompilato **da confermare o correggere** prima di salvare (il
   riconoscimento vocale non è infallibile).
 - **Riscontro automatico della categoria**: la descrizione viene analizzata con un
-  elenco di parole chiave in italiano e classificata in una delle 8 categorie
-  (Alimentari, Trasporti, Casa e bollette, Salute, Svago, Abbigliamento, Istruzione e
-  bambini, Altro). La categoria proposta è sempre modificabile manualmente.
+  elenco di parole chiave in italiano e classificata in una delle oltre 50
+  sottocategorie (es. Supermercato, Farmacia, Ristoranti e pizzerie, Carburante,
+  Asilo e babysitter…), raggruppate in 8 macro-categorie (Alimentari, Trasporti,
+  Casa e bollette, Salute, Svago, Abbigliamento, Istruzione e bambini, Altro). La
+  sottocategoria proposta è sempre modificabile manualmente dal menu, organizzato
+  per macro-categoria.
 - **Dashboard con grafici**: vista Oggi / Settimana / Mese con totale speso,
-  variazione rispetto al periodo precedente, ripartizione per categoria (grafico a
-  ciambella) e andamento giornaliero (grafico a barre), oltre all'elenco dei
-  movimenti con modifica ed eliminazione.
+  variazione rispetto al periodo precedente, ripartizione per macro-categoria
+  (grafico a ciambella, per restare leggibile) e andamento giornaliero (grafico a
+  barre), oltre all'elenco dei movimenti — con la sottocategoria specifica di ogni
+  spesa — con modifica ed eliminazione.
 - **Riepiloghi automatici**: ogni giorno alle 21:00 (personalizzabile) compare un
   riepilogo giornaliero; la domenica alle 21:00 anche il riepilogo settimanale;
   l'ultimo giorno del mese alle 21:00 anche il riepilogo mensile. Ogni riepilogo
