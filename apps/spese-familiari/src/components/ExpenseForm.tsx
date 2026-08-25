@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CATEGORIES, type Expense } from '../types'
+import { CATEGORIES, SUBCATEGORIES, type Expense } from '../types'
 import { classifyCategory } from '../utils/categoryClassifier'
 
 interface Props {
@@ -29,7 +29,7 @@ export function ExpenseForm({ initial, familyMembers, voiceHint, onCancel, onSub
 
   const handleCategoryChange = (value: string) => {
     setCategoryTouched(true)
-    setCategory(value as Expense['category'])
+    setCategory(value)
   }
 
   const parsedAmount = Number(amount.replace(',', '.'))
@@ -96,9 +96,13 @@ export function ExpenseForm({ initial, familyMembers, voiceHint, onCancel, onSub
         </label>
         <select id="category" value={category} onChange={(e) => handleCategoryChange(e.target.value)}>
           {CATEGORIES.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.icon} {c.label}
-            </option>
+            <optgroup key={c.id} label={`${c.icon} ${c.label}`}>
+              {SUBCATEGORIES.filter((s) => s.macro === c.id).map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
       </div>

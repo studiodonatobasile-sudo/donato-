@@ -1,4 +1,4 @@
-import { CATEGORIES, type CategoryId, type Expense } from '../types'
+import { CATEGORIES, resolveCategory, type CategoryId, type Expense } from '../types'
 import {
   addDays,
   daysBetweenInclusive,
@@ -60,14 +60,17 @@ export function sumAmount(expenses: Expense[]): number {
   return expenses.reduce((acc, e) => acc + e.amount, 0)
 }
 
-/** Totali per categoria, ordinati per importo decrescente (il colore resta legato all'id, non alla posizione). */
+/** Totali per macro-categoria (le sottocategorie confluiscono nella loro macro-categoria per
+ * restare leggibili nei grafici), ordinati per importo decrescente — il colore resta legato
+ * all'id della macro-categoria, non alla posizione in classifica. */
 export function byCategory(expenses: Expense[]): CategoryTotal[] {
   const map = new Map<CategoryId, CategoryTotal>()
   for (const cat of CATEGORIES) {
     map.set(cat.id, { id: cat.id, total: 0, count: 0 })
   }
   for (const e of expenses) {
-    const entry = map.get(e.category)
+    const { macro } = resolveCategory(e.category)
+    const entry = map.get(macro.id as CategoryId)
     if (entry) {
       entry.total += e.amount
       entry.count += 1
