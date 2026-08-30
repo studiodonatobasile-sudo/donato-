@@ -1,4 +1,4 @@
-import { CATEGORIES, resolveCategory, type CategoryId, type Expense } from '../types'
+import { CATEGORIES, resolveCategory, type CategoryId, type Expense, type SubcategoryId } from '../types'
 import {
   addDays,
   daysBetweenInclusive,
@@ -79,6 +79,31 @@ export function byCategory(expenses: Expense[]): CategoryTotal[] {
   return Array.from(map.values())
     .filter((c) => c.count > 0)
     .sort((a, b) => b.total - a.total)
+}
+
+export interface SubcategoryTotal {
+  id: SubcategoryId | string
+  total: number
+  count: number
+}
+
+/** Spese di una singola macro-categoria (in base alla sua risoluzione, non all'id salvato letteralmente). */
+export function filterByMacroCategory(expenses: Expense[], macroId: string): Expense[] {
+  return expenses.filter((e) => resolveCategory(e.category).macro.id === macroId)
+}
+
+/** Totali per sottocategoria all'interno di una macro-categoria, ordinati per importo decrescente. */
+export function bySubcategory(expenses: Expense[]): SubcategoryTotal[] {
+  const map = new Map<string, SubcategoryTotal>()
+  for (const e of expenses) {
+    const { subcategory, macro } = resolveCategory(e.category)
+    const id = subcategory ? subcategory.id : macro.id
+    const entry = map.get(id) ?? { id, total: 0, count: 0 }
+    entry.total += e.amount
+    entry.count += 1
+    map.set(id, entry)
+  }
+  return Array.from(map.values()).sort((a, b) => b.total - a.total)
 }
 
 export function byDay(expenses: Expense[], days: string[]): DayPoint[] {

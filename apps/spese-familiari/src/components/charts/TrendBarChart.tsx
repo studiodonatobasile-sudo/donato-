@@ -5,12 +5,14 @@ import { formatDayShort, toDate } from '../../utils/dateUtils'
 
 interface Props {
   data: DayPoint[]
+  /** Se presente, ogni barra diventa cliccabile per vedere il riepilogo di quel giorno. */
+  onSelectDay?: (date: string) => void
 }
 
 const HEIGHT = 110
 
 /** Grafico a barre per l'andamento delle spese giorno per giorno, con tooltip al passaggio del mouse. */
-export function TrendBarChart({ data }: Props) {
+export function TrendBarChart({ data, onSelectDay }: Props) {
   const [hover, setHover] = useState<number | null>(null)
   const max = Math.max(...data.map((d) => d.total), 0.01)
   const barWidth = 100 / data.length
@@ -43,10 +45,22 @@ export function TrendBarChart({ data }: Props) {
               onMouseLeave={() => setHover((v) => (v === i ? null : v))}
               onFocus={() => setHover(i)}
               onBlur={() => setHover((v) => (v === i ? null : v))}
+              onClick={onSelectDay ? () => onSelectDay(d.date) : undefined}
+              onKeyDown={
+                onSelectDay
+                  ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        onSelectDay(d.date)
+                      }
+                    }
+                  : undefined
+              }
               tabIndex={0}
             >
               <title>
                 {formatDayShort(d.date)}: {formatCurrency(d.total)}
+                {onSelectDay ? ' — clicca per il dettaglio' : ''}
               </title>
             </rect>
           )
@@ -76,7 +90,9 @@ export function TrendBarChart({ data }: Props) {
             <strong>{formatDayShort(data[hover].date)}</strong> — {formatCurrency(data[hover].total)}
           </>
         ) : (
-          <span className="hint">Passa il mouse sulle barre per i dettagli</span>
+          <span className="hint">
+            {onSelectDay ? 'Passa il mouse o clicca una barra per i dettagli del giorno' : 'Passa il mouse sulle barre per i dettagli'}
+          </span>
         )}
       </div>
     </div>
