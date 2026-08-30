@@ -166,6 +166,8 @@ export default function App() {
           monthlyBudget={settings.monthlyBudget}
           onClose={closeSummary}
           autoSpeak={!manualSummary && settings.speakSummaryAloud}
+          onEdit={handleEditExpense}
+          onDelete={handleDeleteExpense}
         />
       )}
 

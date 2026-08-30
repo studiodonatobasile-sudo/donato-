@@ -28,6 +28,10 @@ c'è un server, nessun account, nessun dato inviato altrove.
   (grafico a ciambella, per restare leggibile) e andamento giornaliero (grafico a
   barre), oltre all'elenco dei movimenti — con la sottocategoria specifica di ogni
   spesa — con modifica ed eliminazione.
+- **Dettagli cliccabili**: tocca una categoria (nel grafico o nella legenda) per
+  vedere la ripartizione per sottocategoria e i movimenti di quella sola categoria;
+  tocca una barra del grafico giornaliero per aprire il riepilogo di quel giorno
+  specifico, con relativo elenco delle spese.
 - **Riepiloghi automatici**: ogni giorno alle 21:00 (personalizzabile) compare un
   riepilogo giornaliero; la domenica alle 21:00 anche il riepilogo settimanale;
   l'ultimo giorno del mese alle 21:00 anche il riepilogo mensile. Ogni riepilogo

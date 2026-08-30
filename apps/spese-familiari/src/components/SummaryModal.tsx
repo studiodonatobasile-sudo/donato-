@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { CategoryTotal } from '../utils/summary'
 import { byCategory, byDay, filterByRange, percentChange, previousRange, rangeForDay, rangeForMonth, rangeForWeek, sumAmount } from '../utils/summary'
 import type { Expense, SummaryKind } from '../types'
@@ -7,6 +7,8 @@ import { formatMonthLabel, formatDateLabel, todayStr } from '../utils/dateUtils'
 import { formatCurrency, formatPercent } from '../utils/format'
 import { CategoryDonutChart } from './charts/CategoryDonutChart'
 import { TrendBarChart } from './charts/TrendBarChart'
+import { ExpenseList } from './ExpenseList'
+import { CategoryDetailModal } from './CategoryDetailModal'
 
 interface Props {
   kind: SummaryKind
@@ -15,6 +17,11 @@ interface Props {
   onClose: () => void
   autoSpeak?: boolean
   hasMore?: boolean
+  /** Giorno di riferimento per calcolare il periodo (default: oggi). Usato per mostrare il
+   * riepilogo di un giorno specifico, es. cliccando una barra nel grafico dell'andamento. */
+  referenceDate?: string
+  onEdit: (expense: Expense) => void
+  onDelete: (expense: Expense) => void
 }
 
 const TITLES: Record<SummaryKind, { emoji: string; title: string }> = {
@@ -45,14 +52,16 @@ function buildSpeechText(kind: SummaryKind, total: number, categories: CategoryT
   return parts.join(' ')
 }
 
-export function SummaryModal({ kind, expenses, monthlyBudget, onClose, autoSpeak = false, hasMore = false }: Props) {
-  const today = todayStr()
+export function SummaryModal({ kind, expenses, monthlyBudget, onClose, autoSpeak = false, hasMore = false, referenceDate, onEdit, onDelete }: Props) {
+  const referenceDay = referenceDate ?? todayStr()
+  const [dayDetail, setDayDetail] = useState<string | null>(null)
+  const [categoryDetail, setCategoryDetail] = useState<string | null>(null)
 
   const range = useMemo(() => {
-    if (kind === 'daily') return rangeForDay(today)
-    if (kind === 'weekly') return rangeForWeek(today)
-    return rangeForMonth(today)
-  }, [kind, today])
+    if (kind === 'daily') return rangeForDay(referenceDay)
+    if (kind === 'weekly') return rangeForWeek(referenceDay)
+    return rangeForMonth(referenceDay)
+  }, [kind, referenceDay])
 
   const rangeExpenses = useMemo(() => filterByRange(expenses, range), [expenses, range])
   const total = useMemo(() => sumAmount(rangeExpenses), [rangeExpenses])
@@ -67,10 +76,10 @@ export function SummaryModal({ kind, expenses, monthlyBudget, onClose, autoSpeak
   const { emoji, title } = TITLES[kind]
   const subtitle =
     kind === 'daily'
-      ? formatDateLabel(today)
+      ? formatDateLabel(referenceDay)
       : kind === 'weekly'
         ? `${formatDateLabel(range.start)} – ${formatDateLabel(range.end)}`
-        : formatMonthLabel(today)
+        : formatMonthLabel(referenceDay)
 
   const budgetFraction = kind === 'monthly' && monthlyBudget ? total / monthlyBudget : null
   const budgetStatus = budgetFraction === null ? null : budgetFraction >= 1 ? 'critical' : budgetFraction >= 0.8 ? 'warning' : 'good'
@@ -119,13 +128,20 @@ export function SummaryModal({ kind, expenses, monthlyBudget, onClose, autoSpeak
           <>
             <section className="chart-card">
               <h3 className="section-title">Per categoria</h3>
-              <CategoryDonutChart data={categories} total={total} />
+              <CategoryDonutChart data={categories} total={total} onSelect={setCategoryDetail} />
             </section>
 
             {kind !== 'daily' && (
               <section className="chart-card">
                 <h3 className="section-title">Andamento giornaliero</h3>
-                <TrendBarChart data={trendData} />
+                <TrendBarChart data={trendData} onSelectDay={setDayDetail} />
+              </section>
+            )}
+
+            {kind === 'daily' && (
+              <section>
+                <h3 className="section-title">Movimenti</h3>
+                <ExpenseList expenses={rangeExpenses} onEdit={onEdit} onDelete={onDelete} />
               </section>
             )}
           </>
@@ -146,6 +162,33 @@ export function SummaryModal({ kind, expenses, monthlyBudget, onClose, autoSpeak
           </button>
         </div>
       </div>
+
+      {dayDetail && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <SummaryModal
+            kind="daily"
+            referenceDate={dayDetail}
+            expenses={expenses}
+            monthlyBudget={monthlyBudget}
+            onClose={() => setDayDetail(null)}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        </div>
+      )}
+
+      {categoryDetail && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <CategoryDetailModal
+            categoryId={categoryDetail}
+            expenses={rangeExpenses}
+            rangeLabel={subtitle}
+            onClose={() => setCategoryDetail(null)}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { Expense } from '../types'
-import { addDays, daysBetweenInclusive, formatMonthLabel, todayStr } from '../utils/dateUtils'
+import { addDays, daysBetweenInclusive, formatDateLabel, formatMonthLabel, todayStr } from '../utils/dateUtils'
 import {
   byCategory,
   byDay,
@@ -17,6 +17,8 @@ import { StatTile } from './StatTile'
 import { CategoryDonutChart } from './charts/CategoryDonutChart'
 import { TrendBarChart } from './charts/TrendBarChart'
 import { ExpenseList } from './ExpenseList'
+import { CategoryDetailModal } from './CategoryDetailModal'
+import { SummaryModal } from './SummaryModal'
 
 type RangeId = 'day' | 'week' | 'month'
 
@@ -34,6 +36,8 @@ const TABS: { id: RangeId; label: string }[] = [
 
 export function Dashboard({ expenses, onEdit, onDelete }: Props) {
   const [tab, setTab] = useState<RangeId>('day')
+  const [categoryDetail, setCategoryDetail] = useState<string | null>(null)
+  const [dayDetail, setDayDetail] = useState<string | null>(null)
   const today = todayStr()
 
   const range = useMemo(() => {
@@ -58,6 +62,12 @@ export function Dashboard({ expenses, onEdit, onDelete }: Props) {
   const trendData = useMemo(() => byDay(expenses, trendDays), [expenses, trendDays])
 
   const rangeLabel = tab === 'month' ? formatMonthLabel(today) : null
+  const rangeSubtitle =
+    tab === 'day'
+      ? formatDateLabel(today)
+      : tab === 'week'
+        ? `${formatDateLabel(range.start)} – ${formatDateLabel(range.end)}`
+        : formatMonthLabel(today)
 
   return (
     <div className="dashboard">
@@ -84,18 +94,41 @@ export function Dashboard({ expenses, onEdit, onDelete }: Props) {
 
       <section className="chart-card">
         <h2 className="section-title">Per categoria</h2>
-        <CategoryDonutChart data={categories} total={total} />
+        <CategoryDonutChart data={categories} total={total} onSelect={setCategoryDetail} />
       </section>
 
       <section className="chart-card">
         <h2 className="section-title">{tab === 'day' ? 'Ultimi 7 giorni' : 'Andamento giornaliero'}</h2>
-        <TrendBarChart data={trendData} />
+        <TrendBarChart data={trendData} onSelectDay={setDayDetail} />
       </section>
 
       <section>
         <h2 className="section-title">Movimenti</h2>
         <ExpenseList expenses={rangeExpenses} onEdit={onEdit} onDelete={onDelete} />
       </section>
+
+      {categoryDetail && (
+        <CategoryDetailModal
+          categoryId={categoryDetail}
+          expenses={rangeExpenses}
+          rangeLabel={rangeSubtitle}
+          onClose={() => setCategoryDetail(null)}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+      )}
+
+      {dayDetail && (
+        <SummaryModal
+          kind="daily"
+          referenceDate={dayDetail}
+          expenses={expenses}
+          monthlyBudget={null}
+          onClose={() => setDayDetail(null)}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+      )}
     </div>
   )
 }
