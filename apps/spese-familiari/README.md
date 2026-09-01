@@ -23,11 +23,14 @@ c'è un server, nessun account, nessun dato inviato altrove.
   Casa e bollette, Salute, Svago, Abbigliamento, Istruzione e bambini, Altro). La
   sottocategoria proposta è sempre modificabile manualmente dal menu, organizzato
   per macro-categoria.
-- **Dashboard con grafici**: vista Oggi / Settimana / Mese con totale speso,
+- **Dashboard con grafici**: vista Giorno / Settimana / Mese con totale speso,
   variazione rispetto al periodo precedente, ripartizione per macro-categoria
   (grafico a ciambella, per restare leggibile) e andamento giornaliero (grafico a
   barre), oltre all'elenco dei movimenti — con la sottocategoria specifica di ogni
   spesa — con modifica ed eliminazione.
+- **Naviga i periodi precedenti**: con le frecce ‹ › sopra la dashboard si sfogliano
+  i giorni, le settimane e i mesi passati (il pulsante "Torna a oggi" riporta subito
+  al periodo corrente); il grafico e l'elenco si aggiornano di conseguenza.
 - **Dettagli cliccabili**: tocca una categoria (nel grafico o nella legenda) per
   vedere la ripartizione per sottocategoria e i movimenti di quella sola categoria;
   tocca una barra del grafico giornaliero per aprire il riepilogo di quel giorno
