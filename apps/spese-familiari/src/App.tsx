@@ -50,7 +50,7 @@ export default function App() {
     []
   )
 
-  const { current: autoSummary, dequeue } = useSummaryScheduler(settings, loaded, handleScheduledShown)
+  const { current: autoSummary, dequeue } = useSummaryScheduler(settings, expenses, loaded, handleScheduledShown)
 
   const activeSummary = manualSummary ?? autoSummary
 
