@@ -4,7 +4,7 @@ import { byCategory, byDay, filterByRange, percentChange, previousRange, rangeFo
 import type { Expense, SummaryKind } from '../types'
 import { getCategory } from '../types'
 import { formatMonthLabel, formatDateLabel, todayStr } from '../utils/dateUtils'
-import { capitalize, formatCurrency, formatPercent } from '../utils/format'
+import { capitalize, formatCurrency, formatPercent, sanitizeFilename } from '../utils/format'
 import { exportExpensesToExcel } from '../utils/exportExcel'
 import { CategoryDonutChart } from './charts/CategoryDonutChart'
 import { TrendBarChart } from './charts/TrendBarChart'
@@ -99,7 +99,7 @@ export function SummaryModal({ kind, expenses, monthlyBudget, onClose, autoSpeak
   }, [])
 
   const handleExport = () => {
-    void exportExpensesToExcel(rangeExpenses, `Spese Familiari - ${capitalize(subtitle)}.xlsx`)
+    void exportExpensesToExcel(rangeExpenses, `Spese Familiari - ${sanitizeFilename(capitalize(subtitle))}.xlsx`)
   }
 
   return (
@@ -157,7 +157,7 @@ export function SummaryModal({ kind, expenses, monthlyBudget, onClose, autoSpeak
         {hasMore && <p className="hint">C'è ancora un altro riepilogo da vedere dopo questo.</p>}
 
         <div className="form-actions">
-          {kind === 'monthly' && total > 0 && (
+          {(kind === 'weekly' || kind === 'monthly') && total > 0 && (
             <button type="button" className="btn secondary" onClick={handleExport}>
               📥 Esporta Excel
             </button>

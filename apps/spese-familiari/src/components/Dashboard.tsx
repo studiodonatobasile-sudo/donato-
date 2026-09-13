@@ -13,7 +13,7 @@ import {
   sumAmount,
   type Range
 } from '../utils/summary'
-import { capitalize, formatCurrency } from '../utils/format'
+import { capitalize, formatCurrency, sanitizeFilename } from '../utils/format'
 import { exportExpensesToExcel } from '../utils/exportExcel'
 import { StatTile } from './StatTile'
 import { CategoryDonutChart } from './charts/CategoryDonutChart'
@@ -109,7 +109,7 @@ export function Dashboard({ expenses, onEdit, onDelete }: Props) {
   const goToToday = () => setReferenceDate(today)
 
   const handleExport = () => {
-    void exportExpensesToExcel(rangeExpenses, `Spese Familiari - ${capitalize(rangeSubtitle)}.xlsx`)
+    void exportExpensesToExcel(rangeExpenses, `Spese Familiari - ${sanitizeFilename(capitalize(rangeSubtitle))}.xlsx`)
   }
 
   return (
@@ -153,14 +153,14 @@ export function Dashboard({ expenses, onEdit, onDelete }: Props) {
         )}
       </div>
 
-      {(!isCurrentPeriod || tab === 'month') && (
+      {(!isCurrentPeriod || tab === 'week' || tab === 'month') && (
         <div className="dashboard-actions">
           {!isCurrentPeriod && (
             <button type="button" className="btn secondary" onClick={goToToday}>
               Torna a oggi
             </button>
           )}
-          {tab === 'month' && (
+          {(tab === 'week' || tab === 'month') && (
             <button type="button" className="btn secondary" onClick={handleExport} disabled={rangeExpenses.length === 0}>
               📥 Esporta Excel
             </button>

@@ -43,13 +43,16 @@ c'è un server, nessun account, nessun dato inviato altrove.
   dal pulsante 📊.
 - **Budget mensile opzionale**: imposta un obiettivo di spesa mensile per vedere a
   colpo d'occhio quanto ne hai già usato nel riepilogo mensile.
-- **Esporta in Excel**: dal tab Mese della dashboard (anche per un mese passato,
-  sfogliato con le frecce) o dal riepilogo mensile, il pulsante "📥 Esporta Excel"
-  scarica un file .xlsx con l'elenco di tutte le spese del mese e un foglio di
-  riepilogo per categoria — utile per l'archivio o per condividerlo. Generato
-  interamente nel browser, senza passare da un server.
-- **Notifiche del browser**: facoltative (impostazioni → Abilita notifiche), avvisano
-  quando un riepilogo è pronto anche se la scheda non è in primo piano.
+- **Esporta in Excel**: dal tab Settimana o Mese della dashboard (anche per un
+  periodo passato, sfogliato con le frecce) o dal riepilogo settimanale/mensile, il
+  pulsante "📥 Esporta Excel" scarica un file .xlsx con l'elenco delle spese del
+  periodo e un foglio di riepilogo per categoria — utile per l'archivio o per
+  condividerlo. Generato interamente nel browser, senza passare da un server.
+- **Notifiche del browser**: facoltative (impostazioni → Abilita notifiche). Quando
+  un riepilogo è pronto (giornaliero, settimanale la domenica, mensile a fine mese),
+  la notifica di sistema riporta già la sintesi vera del periodo — totale speso e
+  categoria principale — anche se la scheda non è in primo piano; toccandola si apre
+  l'app sul riepilogo, da cui esportare in Excel.
 
 ## Requisiti del browser
 
