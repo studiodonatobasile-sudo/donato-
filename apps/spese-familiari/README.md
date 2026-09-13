@@ -43,6 +43,11 @@ c'è un server, nessun account, nessun dato inviato altrove.
   dal pulsante 📊.
 - **Budget mensile opzionale**: imposta un obiettivo di spesa mensile per vedere a
   colpo d'occhio quanto ne hai già usato nel riepilogo mensile.
+- **Esporta in Excel**: dal tab Mese della dashboard (anche per un mese passato,
+  sfogliato con le frecce) o dal riepilogo mensile, il pulsante "📥 Esporta Excel"
+  scarica un file .xlsx con l'elenco di tutte le spese del mese e un foglio di
+  riepilogo per categoria — utile per l'archivio o per condividerlo. Generato
+  interamente nel browser, senza passare da un server.
 - **Notifiche del browser**: facoltative (impostazioni → Abilita notifiche), avvisano
   quando un riepilogo è pronto anche se la scheda non è in primo piano.
 
@@ -80,4 +85,6 @@ npm run preview
   la lettura dei riepiloghi
 - Grafici SVG disegnati a mano (ciambella per categoria, barre per l'andamento
   giornaliero), nessuna libreria esterna
+- `xlsx` (SheetJS) per l'esportazione in Excel, caricata solo al momento
+  dell'export e non nel bundle principale dell'app
 - `vite-plugin-pwa` per l'installabilità come app

@@ -4,7 +4,8 @@ import { byCategory, byDay, filterByRange, percentChange, previousRange, rangeFo
 import type { Expense, SummaryKind } from '../types'
 import { getCategory } from '../types'
 import { formatMonthLabel, formatDateLabel, todayStr } from '../utils/dateUtils'
-import { formatCurrency, formatPercent } from '../utils/format'
+import { capitalize, formatCurrency, formatPercent } from '../utils/format'
+import { exportExpensesToExcel } from '../utils/exportExcel'
 import { CategoryDonutChart } from './charts/CategoryDonutChart'
 import { TrendBarChart } from './charts/TrendBarChart'
 import { ExpenseList } from './ExpenseList'
@@ -97,6 +98,10 @@ export function SummaryModal({ kind, expenses, monthlyBudget, onClose, autoSpeak
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const handleExport = () => {
+    void exportExpensesToExcel(rangeExpenses, `Spese Familiari - ${capitalize(subtitle)}.xlsx`)
+  }
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content summary-modal" onClick={(e) => e.stopPropagation()}>
@@ -152,6 +157,11 @@ export function SummaryModal({ kind, expenses, monthlyBudget, onClose, autoSpeak
         {hasMore && <p className="hint">C'è ancora un altro riepilogo da vedere dopo questo.</p>}
 
         <div className="form-actions">
+          {kind === 'monthly' && total > 0 && (
+            <button type="button" className="btn secondary" onClick={handleExport}>
+              📥 Esporta Excel
+            </button>
+          )}
           {'speechSynthesis' in window && (
             <button type="button" className="btn secondary" onClick={speak}>
               🔊 Ascolta il riepilogo

@@ -204,8 +204,14 @@ body {
   visibility: hidden;
 }
 
-.today-btn {
-  align-self: center;
+.dashboard-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dashboard-actions .btn {
   padding: 6px 14px;
   font-size: 0.82rem;
 }
@@ -527,7 +533,7 @@ body {
   background: var(--primary-hover);
 }
 
-.btn.primary:disabled {
+.btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
