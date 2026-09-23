@@ -59,12 +59,15 @@ async function githubRequest(path: string, token: string, init?: RequestInit): P
   })
 }
 
-/** Accoda una spesa per la sincronizzazione automatica giornaliera verso il foglio Drive.
- * Scrive/aggiorna un file JSON per giornata nel repository (letto ed elaborato una volta al
- * giorno). Operazione "best effort": chi chiama deve gestire eventuali errori senza bloccare
- * il salvataggio locale della spesa, che resta comunque la fonte di verità in IndexedDB. */
-export async function pushExpenseToSyncQueue(expense: Expense, token: string, customCategories: SubcategoryDef[]): Promise<void> {
-  const path = `${QUEUE_PATH_PREFIX}/${expense.date}.json`
+function describeHttpError(status: number): string {
+  if (status === 401) return 'chiave non valida o scaduta: generane una nuova e incollala qui'
+  if (status === 403) return 'la chiave non ha il permesso "Contents: Read and write"'
+  if (status === 404) return `repository non trovato: la chiave deve includere "${REPO_NAME}"`
+  return `errore GitHub ${status}`
+}
+
+async function queueExpensesForDate(date: string, expenses: Expense[], token: string, customCategories: SubcategoryDef[]): Promise<void> {
+  const path = `${QUEUE_PATH_PREFIX}/${date}.json`
 
   const getRes = await githubRequest(`contents/${path}`, token)
   let sha: string | undefined
@@ -74,27 +77,62 @@ export async function pushExpenseToSyncQueue(expense: Expense, token: string, cu
     sha = data.sha
     queue = JSON.parse(decodeBase64Utf8(data.content)) as QueuedExpense[]
   } else if (getRes.status !== 404) {
-    throw new Error(`Lettura coda GitHub fallita (${getRes.status})`)
+    throw new Error(describeHttpError(getRes.status))
   }
 
-  if (queue.some((q) => q.id === expense.id)) return
+  const alreadyQueued = new Set(queue.map((q) => q.id))
+  const toAdd = expenses.filter((e) => !alreadyQueued.has(e.id))
+  if (toAdd.length === 0) return
 
-  queue.push({
-    id: expense.id,
-    date: expense.date,
-    description: expense.member ? `${expense.description} — ${expense.member}` : expense.description,
-    amount: expense.amount,
-    excelCategory: mapToExcelCategory(expense.category, customCategories)
-  })
+  for (const e of toAdd) {
+    queue.push({
+      id: e.id,
+      date: e.date,
+      description: e.description,
+      amount: e.amount,
+      excelCategory: mapToExcelCategory(e.category, customCategories)
+    })
+  }
 
   const putRes = await githubRequest(`contents/${path}`, token, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      message: `Coda sync spese: ${expense.date}`,
+      message: `Coda sync spese: ${date}`,
       content: encodeBase64Utf8(JSON.stringify(queue, null, 2)),
       ...(sha ? { sha } : {})
     })
   })
-  if (!putRes.ok) throw new Error(`Scrittura coda GitHub fallita (${putRes.status})`)
+  if (!putRes.ok) throw new Error(describeHttpError(putRes.status))
+}
+
+/** Accoda nel repository privato le spese dal giorno di attivazione in poi non ancora inviate
+ * (un file JSON per giornata, elaborato ogni notte verso il foglio Drive). Restituisce gli id
+ * inviati e, se un invio fallisce, un messaggio leggibile: le spese non inviate restano da
+ * inviare al tentativo successivo, e comunque salvate in locale in IndexedDB. */
+export async function syncPendingExpenses(
+  expenses: Expense[],
+  token: string,
+  startDate: string,
+  syncedIds: string[],
+  customCategories: SubcategoryDef[]
+): Promise<{ sentIds: string[]; error: string | null }> {
+  const synced = new Set(syncedIds)
+  const byDate = new Map<string, Expense[]>()
+  for (const e of expenses) {
+    if (e.date < startDate || synced.has(e.id)) continue
+    byDate.set(e.date, [...(byDate.get(e.date) ?? []), e])
+  }
+
+  const sentIds: string[] = []
+  for (const [date, list] of byDate) {
+    try {
+      await queueExpensesForDate(date, list, token, customCategories)
+    } catch (err) {
+      const error = err instanceof TypeError ? 'nessuna connessione a internet' : err instanceof Error ? err.message : String(err)
+      return { sentIds, error }
+    }
+    sentIds.push(...list.map((e) => e.id))
+  }
+  return { sentIds, error: null }
 }

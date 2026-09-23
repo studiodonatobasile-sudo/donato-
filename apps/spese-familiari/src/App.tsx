@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { deleteExpense as dbDeleteExpense, getAllExpenses, getSettings, saveExpense as dbSaveExpense, saveSettings } from './db'
 import { createEmptyExpense, DEFAULT_SETTINGS, type AppSettings, type Expense, type SummaryKind } from './types'
 import { useSummaryScheduler } from './hooks/useSummaryScheduler'
-import { pushExpenseToSyncQueue } from './utils/githubSync'
+import { syncPendingExpenses } from './utils/githubSync'
+import { todayStr } from './utils/dateUtils'
 import { CustomCategoriesProvider } from './context/CategoriesContext'
 import { Header } from './components/Header'
 import { VoiceExpenseBar } from './components/VoiceExpenseBar'
@@ -91,20 +92,50 @@ export default function App() {
   }
 
   const handleFormSubmit = async (expense: Expense) => {
-    const isNew = formState.mode === 'new'
     await dbSaveExpense(expense)
     setExpenses((prev) => {
       const exists = prev.some((e) => e.id === expense.id)
       return exists ? prev.map((e) => (e.id === expense.id ? expense : e)) : [...prev, expense]
     })
     setFormState({ mode: 'closed' })
-
-    if (isNew && settings.githubSyncToken) {
-      pushExpenseToSyncQueue(expense, settings.githubSyncToken, settings.customCategories).catch((err) => {
-        console.error('Sincronizzazione automatica non riuscita (la spesa resta salvata sul dispositivo):', err)
-      })
-    }
   }
+
+  const syncInFlight = useRef(false)
+  const runSync = useCallback(
+    async (currentExpenses: Expense[], current: AppSettings) => {
+      if (!current.githubSyncToken || syncInFlight.current) return
+      syncInFlight.current = true
+      const startDate = current.syncStartDate ?? todayStr()
+      const { sentIds, error } = await syncPendingExpenses(
+        currentExpenses,
+        current.githubSyncToken,
+        startDate,
+        current.syncedExpenseIds,
+        current.customCategories
+      )
+      syncInFlight.current = false
+      setSettings((prev) => {
+        const next: AppSettings = {
+          ...prev,
+          syncStartDate: prev.syncStartDate ?? startDate,
+          syncedExpenseIds: [...prev.syncedExpenseIds, ...sentIds.filter((id) => !prev.syncedExpenseIds.includes(id))],
+          lastSyncResult: error
+            ? { at: Date.now(), ok: false, message: error }
+            : { at: Date.now(), ok: true, message: sentIds.length > 0 ? `inviate ${sentIds.length} spese` : 'nessuna spesa nuova da inviare' }
+        }
+        void saveSettings(next)
+        return next
+      })
+    },
+    []
+  )
+
+  useEffect(() => {
+    if (loaded) void runSync(expenses, settings)
+    // Solo al caricamento, a ogni spesa aggiunta/modificata e al cambio di chiave: non a ogni
+    // aggiornamento delle impostazioni, che la sincronizzazione stessa modifica.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, expenses, settings.githubSyncToken, runSync])
 
   return (
     <CustomCategoriesProvider categories={settings.customCategories}>
@@ -188,6 +219,7 @@ export default function App() {
           onChange={updateSettings}
           onClose={() => setShowSettings(false)}
           onResetData={handleResetData}
+          onSyncNow={() => runSync(expenses, settings)}
         />
       )}
     </div>

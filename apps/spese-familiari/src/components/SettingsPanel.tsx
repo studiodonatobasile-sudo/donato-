@@ -7,9 +7,10 @@ interface Props {
   onChange: (settings: AppSettings) => void
   onClose: () => void
   onResetData: () => void
+  onSyncNow: () => void
 }
 
-export function SettingsPanel({ settings, expenses, onChange, onClose, onResetData }: Props) {
+export function SettingsPanel({ settings, expenses, onChange, onClose, onResetData, onSyncNow }: Props) {
   const [membersInput, setMembersInput] = useState(settings.familyMembers.join(', '))
   const [budgetInput, setBudgetInput] = useState(settings.monthlyBudget !== null ? String(settings.monthlyBudget) : '')
   const [newLabel, setNewLabel] = useState('')
@@ -189,11 +190,26 @@ export function SettingsPanel({ settings, expenses, onChange, onClose, onResetDa
               onBlur={commitToken}
             />
           </div>
-          <p className="hint">
-            {settings.githubSyncToken
-              ? '✅ Sincronizzazione attiva: le nuove spese vengono accodate in privato e copiate ogni notte sul foglio Drive.'
-              : 'Coda non attiva: le spese restano solo su questo dispositivo.'}
-          </p>
+          {settings.githubSyncToken ? (
+            <>
+              <p className="hint">
+                ✅ Sincronizzazione attiva
+                {settings.syncStartDate ? ` dal ${new Date(`${settings.syncStartDate}T00:00:00`).toLocaleDateString('it-IT')}` : ''}: le spese vengono
+                inviate in privato e copiate ogni notte sul foglio Drive.
+              </p>
+              {settings.lastSyncResult && (
+                <p className={settings.lastSyncResult.ok ? 'hint' : 'hint error-text'}>
+                  Ultimo invio ({new Date(settings.lastSyncResult.at).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' })}):{' '}
+                  {settings.lastSyncResult.ok ? '✅' : '⚠️'} {settings.lastSyncResult.message}
+                </p>
+              )}
+              <button type="button" className="btn secondary" onClick={onSyncNow}>
+                🔄 Invia ora
+              </button>
+            </>
+          ) : (
+            <p className="hint">Sincronizzazione non attiva: le spese restano solo su questo dispositivo.</p>
+          )}
         </div>
 
         <div className="settings-section">
