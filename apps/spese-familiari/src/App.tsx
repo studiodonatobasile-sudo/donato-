@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { deleteExpense as dbDeleteExpense, getAllExpenses, getSettings, saveExpense as dbSaveExpense, saveSettings } from './db'
 import { createEmptyExpense, DEFAULT_SETTINGS, type AppSettings, type Expense, type SummaryKind } from './types'
 import { useSummaryScheduler } from './hooks/useSummaryScheduler'
-import { syncPendingExpenses } from './utils/githubSync'
+import { buildDriveExportFile, expensesToSend, shareDriveExportFile } from './utils/driveExport'
 import { todayStr } from './utils/dateUtils'
 import { CustomCategoriesProvider } from './context/CategoriesContext'
 import { Header } from './components/Header'
@@ -100,42 +100,33 @@ export default function App() {
     setFormState({ mode: 'closed' })
   }
 
-  const syncInFlight = useRef(false)
-  const runSync = useCallback(
-    async (currentExpenses: Expense[], current: AppSettings) => {
-      if (!current.githubSyncToken || syncInFlight.current) return
-      syncInFlight.current = true
-      const startDate = current.syncStartDate ?? todayStr()
-      const { sentIds, error } = await syncPendingExpenses(
-        currentExpenses,
-        current.githubSyncToken,
-        startDate,
-        current.syncedExpenseIds,
-        current.customCategories
-      )
-      syncInFlight.current = false
-      setSettings((prev) => {
-        const next: AppSettings = {
-          ...prev,
-          syncStartDate: prev.syncStartDate ?? startDate,
-          syncedExpenseIds: [...prev.syncedExpenseIds, ...sentIds.filter((id) => !prev.syncedExpenseIds.includes(id))],
-          lastSyncResult: error
-            ? { at: Date.now(), ok: false, message: error }
-            : { at: Date.now(), ok: true, message: sentIds.length > 0 ? `inviate ${sentIds.length} spese` : 'nessuna spesa nuova da inviare' }
-        }
-        void saveSettings(next)
-        return next
-      })
-    },
-    []
-  )
-
-  useEffect(() => {
-    if (loaded) void runSync(expenses, settings)
-    // Solo al caricamento, a ogni spesa aggiunta/modificata e al cambio di chiave: non a ogni
-    // aggiornamento delle impostazioni, che la sincronizzazione stessa modifica.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, expenses, settings.githubSyncToken, runSync])
+  const handleSendToDrive = async () => {
+    const startDate = settings.driveExportStartDate ?? todayStr()
+    const toSend = expensesToSend(expenses, startDate, settings.driveExportedIds)
+    if (toSend.length === 0) {
+      window.alert('Nessuna spesa da inviare.')
+      return
+    }
+    let shared: boolean
+    try {
+      shared = await shareDriveExportFile(buildDriveExportFile(toSend, settings.customCategories))
+    } catch {
+      window.alert('Invio non riuscito: riprova. Le spese restano salvate sul telefono.')
+      return
+    }
+    if (!shared) return
+    setSettings((prev) => {
+      const known = new Set(prev.driveExportedIds)
+      const next: AppSettings = {
+        ...prev,
+        driveExportStartDate: prev.driveExportStartDate ?? startDate,
+        driveExportedIds: [...prev.driveExportedIds, ...toSend.map((e) => e.id).filter((id) => !known.has(id))],
+        lastDriveExport: { at: Date.now(), count: toSend.length }
+      }
+      void saveSettings(next)
+      return next
+    })
+  }
 
   return (
     <CustomCategoriesProvider categories={settings.customCategories}>
@@ -209,6 +200,7 @@ export default function App() {
           autoSpeak={!manualSummary && settings.speakSummaryAloud}
           onEdit={handleEditExpense}
           onDelete={handleDeleteExpense}
+          onSendToDrive={handleSendToDrive}
         />
       )}
 
@@ -219,7 +211,7 @@ export default function App() {
           onChange={updateSettings}
           onClose={() => setShowSettings(false)}
           onResetData={handleResetData}
-          onSyncNow={() => runSync(expenses, settings)}
+          onSendToDrive={handleSendToDrive}
         />
       )}
     </div>

@@ -57,7 +57,12 @@ export async function getSettings(): Promise<AppSettings> {
   // L'oggetto salvato potrebbe risalire a una versione precedente dell'app e non avere ancora
   // i campi aggiunti da allora (es. customCategories): il merge con i default li completa senza
   // toccare i valori già scelti dall'utente.
-  return s ? { ...DEFAULT_SETTINGS, ...s } : DEFAULT_SETTINGS
+  if (!s) return DEFAULT_SETTINGS
+  // Campi della vecchia sincronizzazione via GitHub: tra questi c'era una chiave di accesso,
+  // che non va conservata sul dispositivo ora che non serve più.
+  const legacy = s as AppSettings & Record<string, unknown>
+  for (const key of ['githubSyncToken', 'syncStartDate', 'syncedExpenseIds', 'lastSyncResult']) delete legacy[key]
+  return { ...DEFAULT_SETTINGS, ...legacy }
 }
 
 export async function saveSettings(settings: AppSettings): Promise<void> {

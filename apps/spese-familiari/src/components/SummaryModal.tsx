@@ -24,6 +24,8 @@ interface Props {
   referenceDate?: string
   onEdit: (expense: Expense) => void
   onDelete: (expense: Expense) => void
+  /** Se presente, il riepilogo giornaliero mostra il pulsante per inviare le spese al foglio Drive. */
+  onSendToDrive?: () => void
 }
 
 const TITLES: Record<SummaryKind, { emoji: string; title: string }> = {
@@ -54,7 +56,7 @@ function buildSpeechText(kind: SummaryKind, total: number, categories: CategoryT
   return parts.join(' ')
 }
 
-export function SummaryModal({ kind, expenses, monthlyBudget, onClose, autoSpeak = false, hasMore = false, referenceDate, onEdit, onDelete }: Props) {
+export function SummaryModal({ kind, expenses, monthlyBudget, onClose, autoSpeak = false, hasMore = false, referenceDate, onEdit, onDelete, onSendToDrive }: Props) {
   const customCategories = useCustomCategories()
   const referenceDay = referenceDate ?? todayStr()
   const [dayDetail, setDayDetail] = useState<string | null>(null)
@@ -159,6 +161,11 @@ export function SummaryModal({ kind, expenses, monthlyBudget, onClose, autoSpeak
         {hasMore && <p className="hint">C'è ancora un altro riepilogo da vedere dopo questo.</p>}
 
         <div className="form-actions">
+          {kind === 'daily' && onSendToDrive && (
+            <button type="button" className="btn secondary" onClick={onSendToDrive}>
+              📤 Invia a Drive
+            </button>
+          )}
           {(kind === 'weekly' || kind === 'monthly') && total > 0 && (
             <button type="button" className="btn secondary" onClick={handleExport}>
               📥 Esporta Excel
