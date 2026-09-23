@@ -66,8 +66,9 @@ c'è un server, nessun account, nessun dato inviato altrove.
   trascrivere, da salvare su Google Drive. Ogni notte una routine automatica le trascrive nel
   foglio "Spese Familiari" del file "Gestione_Forfettario_PRO mensile.xlsx", compilando solo
   le colonne già presenti (N., Data, Descrizione, Categoria, Importo €), senza doppioni, così
-  che la Dashboard del file le conteggi. Le spese degli ultimi 7 giorni vengono reinviate a
-  ogni invio, così un invio andato male viene recuperato dal successivo.
+  che la Dashboard del file le conteggi. Il primo invio comprende tutta la settimana in corso;
+  poi si inviano le spese non ancora inviate, più quelle degli ultimi 7 giorni, così un
+  invio andato male viene recuperato dal successivo.
 
 ## Requisiti del browser
 
