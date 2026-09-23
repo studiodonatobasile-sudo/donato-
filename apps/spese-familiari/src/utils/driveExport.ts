@@ -60,7 +60,8 @@ export function buildDriveExportFile(expenses: Expense[], customCategories: Subc
 export async function shareDriveExportFile(file: File): Promise<boolean> {
   if (navigator.canShare?.({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: file.name })
+      // Solo il file: con un titolo, la condivisione su iPhone salva anche un .txt con quel testo.
+      await navigator.share({ files: [file] })
       return true
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return false
