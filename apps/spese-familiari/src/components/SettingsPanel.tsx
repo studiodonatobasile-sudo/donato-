@@ -161,10 +161,10 @@ export function SettingsPanel({ settings, expenses, onChange, onClose, onResetDa
         <div className="settings-section">
           <h3 className="section-title">Invio spese al foglio Drive</h3>
           <p className="hint">
-            Tocca "📤 Invia a Drive" (anche dal riepilogo della sera) e scegli Drive: ogni notte le
-            spese vengono trascritte nel foglio "Spese Familiari" del file
-            "Gestione_Forfettario_PRO mensile.xlsx", solo nelle colonne già presenti e senza doppioni.
-            Il file resta privato nel tuo Drive.
+            Il venerdì sera tocca "📤 Invia a Drive" (anche dal riepilogo della sera) e scegli Drive:
+            verso le 22:30 le spese vengono aggiunte al foglio "Spese Familiari" del file Gestione
+            Forfettario PRO, sempre nello stesso file, solo nelle righe vuote e nelle colonne già
+            presenti, senza doppioni. Tutto resta privato nel tuo Drive.
           </p>
           <button type="button" className="btn secondary" onClick={onSendToDrive}>
             📤 Invia a Drive
