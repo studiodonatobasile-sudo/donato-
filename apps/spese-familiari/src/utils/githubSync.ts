@@ -117,6 +117,9 @@ export async function syncPendingExpenses(
   syncedIds: string[],
   customCategories: SubcategoryDef[]
 ): Promise<{ sentIds: string[]; error: string | null }> {
+  if (!/^[\x21-\x7e]+$/.test(token)) {
+    return { sentIds: [], error: 'la chiave contiene caratteri non validi: cancellala e incollala di nuovo da GitHub' }
+  }
   const synced = new Set(syncedIds)
   const byDate = new Map<string, Expense[]>()
   for (const e of expenses) {

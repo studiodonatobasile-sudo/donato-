@@ -1,6 +1,14 @@
 import { useState } from 'react'
 import { CATEGORIES, createCustomCategory, getCategory, type AppSettings, type Expense } from '../types'
 
+// Chiavi GitHub: fine-grained (github_pat_…) o classiche (ghp_…), solo caratteri ASCII.
+const TOKEN_PATTERN = /^(github_pat_|gh[pousr]_)[A-Za-z0-9_]{20,}$/
+
+function tokenProblem(value: string | null): string | null {
+  if (!value || TOKEN_PATTERN.test(value)) return null
+  return `Chiave incompleta o non valida (${value.length} caratteri): una chiave completa inizia con "github_pat_" ed è lunga circa 90 caratteri. Copiala di nuovo da GitHub con l'icona di copia accanto al codice.`
+}
+
 interface Props {
   settings: AppSettings
   expenses: Expense[]
@@ -17,6 +25,7 @@ export function SettingsPanel({ settings, expenses, onChange, onClose, onResetDa
   const [newMacro, setNewMacro] = useState(CATEGORIES[CATEGORIES.length - 1].id)
   const [newKeywords, setNewKeywords] = useState('')
   const [tokenInput, setTokenInput] = useState(settings.githubSyncToken ?? '')
+  const [tokenError, setTokenError] = useState<string | null>(tokenProblem(settings.githubSyncToken))
 
   const notificationsSupported = 'Notification' in window
 
@@ -40,8 +49,10 @@ export function SettingsPanel({ settings, expenses, onChange, onClose, onResetDa
   }
 
   const commitToken = () => {
-    const value = tokenInput.trim()
-    onChange({ ...settings, githubSyncToken: value === '' ? null : value })
+    const value = tokenInput.replace(/\s+/g, '')
+    const problem = tokenProblem(value)
+    setTokenError(problem)
+    onChange({ ...settings, githubSyncToken: value === '' || problem ? null : value })
   }
 
   const handleAddCategory = (e: React.FormEvent) => {
@@ -184,16 +195,17 @@ export function SettingsPanel({ settings, expenses, onChange, onClose, onResetDa
             <input
               id="github-token"
               type="password"
-              placeholder="github_pat_…"
+              placeholder="Incolla qui la chiave (inizia con github_pat_)"
               value={tokenInput}
               onChange={(e) => setTokenInput(e.target.value)}
               onBlur={commitToken}
             />
           </div>
+          {tokenError && <p className="hint error-text">⚠️ {tokenError}</p>}
           {settings.githubSyncToken ? (
             <>
               <p className="hint">
-                ✅ Sincronizzazione attiva
+                ✅ Sincronizzazione attiva (chiave di {settings.githubSyncToken.length} caratteri)
                 {settings.syncStartDate ? ` dal ${new Date(`${settings.syncStartDate}T00:00:00`).toLocaleDateString('it-IT')}` : ''}: le spese vengono
                 inviate in privato e copiate ogni notte sul foglio Drive.
               </p>
