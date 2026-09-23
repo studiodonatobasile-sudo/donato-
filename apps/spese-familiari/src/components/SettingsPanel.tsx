@@ -15,6 +15,7 @@ export function SettingsPanel({ settings, expenses, onChange, onClose, onResetDa
   const [newLabel, setNewLabel] = useState('')
   const [newMacro, setNewMacro] = useState(CATEGORIES[CATEGORIES.length - 1].id)
   const [newKeywords, setNewKeywords] = useState('')
+  const [tokenInput, setTokenInput] = useState(settings.githubSyncToken ?? '')
 
   const notificationsSupported = 'Notification' in window
 
@@ -35,6 +36,11 @@ export function SettingsPanel({ settings, expenses, onChange, onClose, onResetDa
   const commitBudget = () => {
     const value = budgetInput.trim() === '' ? null : Number(budgetInput.replace(',', '.'))
     onChange({ ...settings, monthlyBudget: value !== null && value > 0 ? value : null })
+  }
+
+  const commitToken = () => {
+    const value = tokenInput.trim()
+    onChange({ ...settings, githubSyncToken: value === '' ? null : value })
   }
 
   const handleAddCategory = (e: React.FormEvent) => {
@@ -155,6 +161,40 @@ export function SettingsPanel({ settings, expenses, onChange, onClose, onResetDa
               onBlur={commitMembers}
             />
           </div>
+        </div>
+
+        <div className="settings-section">
+          <h3 className="section-title">Sincronizzazione verso Google Drive</h3>
+          <p className="hint">
+            Le nuove spese possono essere messe in coda in un repository GitHub <strong>privato</strong>{' '}
+            (visibile solo a te, mai su internet), pronte per essere copiate nel foglio "Spese
+            Familiari" del file Drive "Gestione_Forfettario_PRO mensile.xlsx". La scrittura sul
+            foglio Drive avviene solo quando la richiedi esplicitamente (per ora nessun invio
+            automatico in background). Per attivare la coda, crea un token GitHub "fine-grained"
+            limitato al solo repository privato <code>spese-familiari-sync-privato</code> (permesso
+            "Contents: Read and write") da{' '}
+            <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">
+              github.com/settings/personal-access-tokens/new
+            </a>{' '}
+            e incollalo qui sotto. Resta solo su questo dispositivo: non viene mai salvato nel
+            codice dell'app né in repository pubblici.
+          </p>
+          <div className="field">
+            <label htmlFor="github-token">Token di sincronizzazione</label>
+            <input
+              id="github-token"
+              type="password"
+              placeholder="github_pat_…"
+              value={tokenInput}
+              onChange={(e) => setTokenInput(e.target.value)}
+              onBlur={commitToken}
+            />
+          </div>
+          <p className="hint">
+            {settings.githubSyncToken
+              ? '✅ Coda attiva: le nuove spese vengono accodate in privato, pronte per la sincronizzazione su richiesta.'
+              : 'Coda non attiva: le spese restano solo su questo dispositivo.'}
+          </p>
         </div>
 
         <div className="settings-section">
