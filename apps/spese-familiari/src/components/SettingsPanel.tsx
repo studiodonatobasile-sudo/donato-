@@ -170,7 +170,7 @@ export function SettingsPanel({ settings, expenses, onChange, onClose, onResetDa
             (visibile solo a te, mai su internet) e ogni notte vengono copiate automaticamente nel
             foglio "Spese Familiari" del file Drive "Gestione_Forfettario_PRO mensile.xlsx", usando
             solo le colonne già presenti. Per attivarla, crea un token GitHub "fine-grained"
-            limitato al solo repository privato <code>spese-familiari-sync-privato</code> (permesso
+            limitato al solo repository privato <code>spese-familiari-sync--privato</code> (permesso
             "Contents: Read and write") da{' '}
             <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">
               github.com/settings/personal-access-tokens/new

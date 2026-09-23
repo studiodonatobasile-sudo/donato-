@@ -3,7 +3,7 @@ import { resolveCategory, type Expense, type SubcategoryDef } from '../types'
 // Repository PRIVATO dedicato alla coda di sincronizzazione (mai il repository pubblico del
 // sito, che è visibile a chiunque su internet: scriverci dati di spesa li renderebbe pubblici).
 const REPO_OWNER = 'studiodonatobasile-sudo'
-const REPO_NAME = 'spese-familiari-sync-privato'
+const REPO_NAME = 'spese-familiari-sync--privato'
 const QUEUE_PATH_PREFIX = 'sync-queue'
 
 /** Eccezioni di mappatura per sottocategoria specifica, quando la macro-categoria da sola
