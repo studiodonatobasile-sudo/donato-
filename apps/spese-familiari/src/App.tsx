@@ -3,7 +3,7 @@ import { deleteExpense as dbDeleteExpense, getAllExpenses, getSettings, saveExpe
 import { createEmptyExpense, DEFAULT_SETTINGS, type AppSettings, type Expense, type SummaryKind } from './types'
 import { useSummaryScheduler } from './hooks/useSummaryScheduler'
 import { buildDriveExportFile, expensesToSend, shareDriveExportFile } from './utils/driveExport'
-import { todayStr } from './utils/dateUtils'
+import { startOfWeek, todayStr } from './utils/dateUtils'
 import { CustomCategoriesProvider } from './context/CategoriesContext'
 import { Header } from './components/Header'
 import { VoiceExpenseBar } from './components/VoiceExpenseBar'
@@ -101,7 +101,9 @@ export default function App() {
   }
 
   const handleSendToDrive = async () => {
-    const startDate = settings.driveExportStartDate ?? todayStr()
+    // Al primo invio si parte dall'inizio della settimana in corso, così l'invio del venerdì
+    // comprende già tutte le spese della settimana.
+    const startDate = settings.driveExportStartDate ?? startOfWeek(todayStr())
     const toSend = expensesToSend(expenses, startDate, settings.driveExportedIds)
     if (toSend.length === 0) {
       window.alert('Nessuna spesa da inviare.')
