@@ -63,10 +63,11 @@ c'è un server, nessun account, nessun dato inviato altrove.
   l'app sul riepilogo, da cui esportare in Excel.
 - **Invio spese al foglio Drive**: il pulsante "📤 Invia a Drive" (nel riepilogo della sera
   e nelle impostazioni) apre la condivisione del telefono con un file CSV delle spese da
-  trascrivere, da salvare su Google Drive. Ogni notte una routine automatica le trascrive nel
-  foglio "Spese Familiari" del file "Gestione_Forfettario_PRO mensile.xlsx", compilando solo
-  le colonne già presenti (N., Data, Descrizione, Categoria, Importo €), senza doppioni, così
-  che la Dashboard del file le conteggi. Il primo invio comprende tutta la settimana in corso;
+  trascrivere, da salvare su Google Drive. Il venerdì (e il sabato, per recuperare) verso le
+  22:30 un programma Google Apps Script installato nel file Gestione Forfettario PRO (Google
+  Fogli) le aggiunge al foglio "Spese Familiari", sempre nello stesso file, solo nelle righe
+  vuote e nelle colonne già presenti (N., Data, Descrizione, Categoria, Importo €), senza
+  doppioni, così che la Dashboard del file le conteggi. Il primo invio comprende tutta la settimana in corso;
   poi si inviano le spese non ancora inviate, più quelle degli ultimi 7 giorni, così un
   invio andato male viene recuperato dal successivo.
 
