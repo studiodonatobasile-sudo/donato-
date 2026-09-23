@@ -1,16 +1,20 @@
 import { useState } from 'react'
-import type { AppSettings } from '../types'
+import { CATEGORIES, createCustomCategory, getCategory, type AppSettings, type Expense } from '../types'
 
 interface Props {
   settings: AppSettings
+  expenses: Expense[]
   onChange: (settings: AppSettings) => void
   onClose: () => void
   onResetData: () => void
 }
 
-export function SettingsPanel({ settings, onChange, onClose, onResetData }: Props) {
+export function SettingsPanel({ settings, expenses, onChange, onClose, onResetData }: Props) {
   const [membersInput, setMembersInput] = useState(settings.familyMembers.join(', '))
   const [budgetInput, setBudgetInput] = useState(settings.monthlyBudget !== null ? String(settings.monthlyBudget) : '')
+  const [newLabel, setNewLabel] = useState('')
+  const [newMacro, setNewMacro] = useState(CATEGORIES[CATEGORIES.length - 1].id)
+  const [newKeywords, setNewKeywords] = useState('')
 
   const notificationsSupported = 'Notification' in window
 
@@ -31,6 +35,29 @@ export function SettingsPanel({ settings, onChange, onClose, onResetData }: Prop
   const commitBudget = () => {
     const value = budgetInput.trim() === '' ? null : Number(budgetInput.replace(',', '.'))
     onChange({ ...settings, monthlyBudget: value !== null && value > 0 ? value : null })
+  }
+
+  const handleAddCategory = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newLabel.trim()) return
+    const keywords = newKeywords
+      .split(',')
+      .map((k) => k.trim())
+      .filter(Boolean)
+    const category = createCustomCategory(newLabel, newMacro, keywords)
+    onChange({ ...settings, customCategories: [...settings.customCategories, category] })
+    setNewLabel('')
+    setNewKeywords('')
+  }
+
+  const handleDeleteCategory = (id: string, label: string) => {
+    const inUse = expenses.filter((e) => e.category === id).length
+    const warning =
+      inUse > 0
+        ? `"${label}" è usata in ${inUse} ${inUse === 1 ? 'spesa' : 'spese'}: dopo l'eliminazione appariranno come "Altro". Eliminare comunque la categoria?`
+        : `Eliminare la categoria "${label}"?`
+    if (!window.confirm(warning)) return
+    onChange({ ...settings, customCategories: settings.customCategories.filter((c) => c.id !== id) })
   }
 
   return (
@@ -128,6 +155,81 @@ export function SettingsPanel({ settings, onChange, onClose, onResetData }: Prop
               onBlur={commitMembers}
             />
           </div>
+        </div>
+
+        <div className="settings-section">
+          <h3 className="section-title">Categorie personalizzate</h3>
+          <p className="hint">
+            Aggiungi le tue categorie di spesa, oltre a quelle già presenti. Ognuna appartiene a una delle 8
+            macro-categorie (determina il colore nei grafici) e può avere parole chiave per il riconoscimento
+            automatico dalla descrizione.
+          </p>
+
+          {settings.customCategories.length > 0 && (
+            <ul className="custom-category-list">
+              {settings.customCategories.map((c) => {
+                const macro = getCategory(c.macro)
+                return (
+                  <li key={c.id} className="custom-category-row">
+                    <span className="legend-swatch" style={{ background: `var(${macro.colorVar})` }} />
+                    <span className="custom-category-label">
+                      {c.label} <span className="hint-inline">— {macro.icon} {macro.label}</span>
+                    </span>
+                    <button
+                      type="button"
+                      className="icon-btn danger"
+                      title="Elimina categoria"
+                      onClick={() => handleDeleteCategory(c.id, c.label)}
+                    >
+                      🗑️
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+
+          <form className="custom-category-form" onSubmit={handleAddCategory}>
+            <div className="field-row">
+              <div className="field">
+                <label htmlFor="new-category-label">Nome categoria</label>
+                <input
+                  id="new-category-label"
+                  type="text"
+                  placeholder="es. Paghetta ragazzi"
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="new-category-macro">Macro-categoria</label>
+                <select id="new-category-macro" value={newMacro} onChange={(e) => setNewMacro(e.target.value as typeof newMacro)}>
+                  {CATEGORIES.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.icon} {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="field">
+              <label htmlFor="new-category-keywords">
+                Parole chiave <span className="hint-inline">(opzionali, separate da virgola, per il riscontro automatico)</span>
+              </label>
+              <input
+                id="new-category-keywords"
+                type="text"
+                placeholder="es. paghetta"
+                value={newKeywords}
+                onChange={(e) => setNewKeywords(e.target.value)}
+              />
+            </div>
+            <div className="form-actions">
+              <button type="submit" className="btn secondary" disabled={!newLabel.trim()}>
+                ➕ Aggiungi categoria
+              </button>
+            </div>
+          </form>
         </div>
 
         <div className="settings-section">

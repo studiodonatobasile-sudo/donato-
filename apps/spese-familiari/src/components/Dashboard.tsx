@@ -15,6 +15,7 @@ import {
 } from '../utils/summary'
 import { capitalize, formatCurrency, sanitizeFilename } from '../utils/format'
 import { exportExpensesToExcel } from '../utils/exportExcel'
+import { useCustomCategories } from '../context/CategoriesContext'
 import { StatTile } from './StatTile'
 import { CategoryDonutChart } from './charts/CategoryDonutChart'
 import { TrendBarChart } from './charts/TrendBarChart'
@@ -52,6 +53,7 @@ function shiftReferenceDate(tab: RangeId, referenceDate: string, direction: -1 |
 }
 
 export function Dashboard({ expenses, onEdit, onDelete }: Props) {
+  const customCategories = useCustomCategories()
   const [tab, setTab] = useState<RangeId>('day')
   const [referenceDate, setReferenceDate] = useState(todayStr())
   const [categoryDetail, setCategoryDetail] = useState<string | null>(null)
@@ -70,7 +72,7 @@ export function Dashboard({ expenses, onEdit, onDelete }: Props) {
 
   const rangeExpenses = useMemo(() => filterByRange(expenses, range), [expenses, range])
   const total = useMemo(() => sumAmount(rangeExpenses), [rangeExpenses])
-  const categories = useMemo(() => byCategory(rangeExpenses), [rangeExpenses])
+  const categories = useMemo(() => byCategory(rangeExpenses, customCategories), [rangeExpenses, customCategories])
 
   const prevRange = useMemo(() => previousRange(range), [range])
   const prevTotal = useMemo(() => sumAmount(filterByRange(expenses, prevRange)), [expenses, prevRange])
@@ -109,7 +111,7 @@ export function Dashboard({ expenses, onEdit, onDelete }: Props) {
   const goToToday = () => setReferenceDate(today)
 
   const handleExport = () => {
-    void exportExpensesToExcel(rangeExpenses, `Spese Familiari - ${sanitizeFilename(capitalize(rangeSubtitle))}.xlsx`)
+    void exportExpensesToExcel(rangeExpenses, `Spese Familiari - ${sanitizeFilename(capitalize(rangeSubtitle))}.xlsx`, customCategories)
   }
 
   return (

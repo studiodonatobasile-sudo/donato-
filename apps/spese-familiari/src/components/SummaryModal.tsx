@@ -6,6 +6,7 @@ import { getCategory } from '../types'
 import { formatMonthLabel, formatDateLabel, todayStr } from '../utils/dateUtils'
 import { capitalize, formatCurrency, formatPercent, sanitizeFilename } from '../utils/format'
 import { exportExpensesToExcel } from '../utils/exportExcel'
+import { useCustomCategories } from '../context/CategoriesContext'
 import { CategoryDonutChart } from './charts/CategoryDonutChart'
 import { TrendBarChart } from './charts/TrendBarChart'
 import { ExpenseList } from './ExpenseList'
@@ -54,6 +55,7 @@ function buildSpeechText(kind: SummaryKind, total: number, categories: CategoryT
 }
 
 export function SummaryModal({ kind, expenses, monthlyBudget, onClose, autoSpeak = false, hasMore = false, referenceDate, onEdit, onDelete }: Props) {
+  const customCategories = useCustomCategories()
   const referenceDay = referenceDate ?? todayStr()
   const [dayDetail, setDayDetail] = useState<string | null>(null)
   const [categoryDetail, setCategoryDetail] = useState<string | null>(null)
@@ -66,7 +68,7 @@ export function SummaryModal({ kind, expenses, monthlyBudget, onClose, autoSpeak
 
   const rangeExpenses = useMemo(() => filterByRange(expenses, range), [expenses, range])
   const total = useMemo(() => sumAmount(rangeExpenses), [rangeExpenses])
-  const categories = useMemo(() => byCategory(rangeExpenses), [rangeExpenses])
+  const categories = useMemo(() => byCategory(rangeExpenses, customCategories), [rangeExpenses, customCategories])
   const trendData = useMemo(() => byDay(expenses, range.days), [expenses, range])
 
   const prevRange = useMemo(() => previousRange(range), [range])
@@ -99,7 +101,7 @@ export function SummaryModal({ kind, expenses, monthlyBudget, onClose, autoSpeak
   }, [])
 
   const handleExport = () => {
-    void exportExpensesToExcel(rangeExpenses, `Spese Familiari - ${sanitizeFilename(capitalize(subtitle))}.xlsx`)
+    void exportExpensesToExcel(rangeExpenses, `Spese Familiari - ${sanitizeFilename(capitalize(subtitle))}.xlsx`, customCategories)
   }
 
   return (

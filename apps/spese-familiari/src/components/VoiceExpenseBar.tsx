@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
 import { createEmptyExpense, type Expense } from '../types'
+import { useCustomCategories } from '../context/CategoriesContext'
 import { parseVoiceExpense } from '../utils/voiceExpenseParser'
 import { classifyCategory } from '../utils/categoryClassifier'
 
@@ -10,6 +11,7 @@ interface Props {
 
 export function VoiceExpenseBar({ onDraftReady }: Props) {
   const { supported, listening, transcript, interimTranscript, error, start, stop, reset } = useSpeechRecognition('it-IT')
+  const customCategories = useCustomCategories()
 
   useEffect(() => {
     if (!listening && transcript) {
@@ -17,7 +19,7 @@ export function VoiceExpenseBar({ onDraftReady }: Props) {
       const draft = createEmptyExpense({
         amount: amount ?? 0,
         description,
-        category: classifyCategory(description),
+        category: classifyCategory(description, customCategories),
         source: 'voice'
       })
       onDraftReady(draft, transcript)

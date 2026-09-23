@@ -54,7 +54,10 @@ export async function deleteExpense(id: string): Promise<void> {
 export async function getSettings(): Promise<AppSettings> {
   const db = await getDb()
   const s = await db.get('settings', 'settings')
-  return s ?? DEFAULT_SETTINGS
+  // L'oggetto salvato potrebbe risalire a una versione precedente dell'app e non avere ancora
+  // i campi aggiunti da allora (es. customCategories): il merge con i default li completa senza
+  // toccare i valori già scelti dall'utente.
+  return s ? { ...DEFAULT_SETTINGS, ...s } : DEFAULT_SETTINGS
 }
 
 export async function saveSettings(settings: AppSettings): Promise<void> {

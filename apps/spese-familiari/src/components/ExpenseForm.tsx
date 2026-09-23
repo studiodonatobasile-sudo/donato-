@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { CATEGORIES, SUBCATEGORIES, type Expense } from '../types'
+import { allSubcategories, CATEGORIES, type Expense } from '../types'
+import { useCustomCategories } from '../context/CategoriesContext'
 import { classifyCategory } from '../utils/categoryClassifier'
 
 interface Props {
@@ -12,6 +13,8 @@ interface Props {
 }
 
 export function ExpenseForm({ initial, familyMembers, voiceHint, onCancel, onSubmit, submitLabel }: Props) {
+  const customCategories = useCustomCategories()
+  const subcategories = allSubcategories(customCategories)
   const [amount, setAmount] = useState(initial.amount > 0 ? String(initial.amount).replace('.', ',') : '')
   const [description, setDescription] = useState(initial.description)
   const [category, setCategory] = useState(initial.category)
@@ -23,7 +26,7 @@ export function ExpenseForm({ initial, familyMembers, voiceHint, onCancel, onSub
   const handleDescriptionChange = (value: string) => {
     setDescription(value)
     if (!categoryTouched) {
-      setCategory(classifyCategory(value))
+      setCategory(classifyCategory(value, customCategories))
     }
   }
 
@@ -97,11 +100,13 @@ export function ExpenseForm({ initial, familyMembers, voiceHint, onCancel, onSub
         <select id="category" value={category} onChange={(e) => handleCategoryChange(e.target.value)}>
           {CATEGORIES.map((c) => (
             <optgroup key={c.id} label={`${c.icon} ${c.label}`}>
-              {SUBCATEGORIES.filter((s) => s.macro === c.id).map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label}
-                </option>
-              ))}
+              {subcategories
+                .filter((s) => s.macro === c.id)
+                .map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.label}
+                  </option>
+                ))}
             </optgroup>
           ))}
         </select>

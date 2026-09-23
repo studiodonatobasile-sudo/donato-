@@ -1,4 +1,4 @@
-import { CATEGORIES, resolveCategory, type CategoryId, type Expense, type SubcategoryId } from '../types'
+import { CATEGORIES, resolveCategory, type CategoryId, type Expense, type SubcategoryDef, type SubcategoryId } from '../types'
 import {
   addDays,
   daysBetweenInclusive,
@@ -63,13 +63,13 @@ export function sumAmount(expenses: Expense[]): number {
 /** Totali per macro-categoria (le sottocategorie confluiscono nella loro macro-categoria per
  * restare leggibili nei grafici), ordinati per importo decrescente — il colore resta legato
  * all'id della macro-categoria, non alla posizione in classifica. */
-export function byCategory(expenses: Expense[]): CategoryTotal[] {
+export function byCategory(expenses: Expense[], customCategories: SubcategoryDef[] = []): CategoryTotal[] {
   const map = new Map<CategoryId, CategoryTotal>()
   for (const cat of CATEGORIES) {
     map.set(cat.id, { id: cat.id, total: 0, count: 0 })
   }
   for (const e of expenses) {
-    const { macro } = resolveCategory(e.category)
+    const { macro } = resolveCategory(e.category, customCategories)
     const entry = map.get(macro.id as CategoryId)
     if (entry) {
       entry.total += e.amount
@@ -88,15 +88,15 @@ export interface SubcategoryTotal {
 }
 
 /** Spese di una singola macro-categoria (in base alla sua risoluzione, non all'id salvato letteralmente). */
-export function filterByMacroCategory(expenses: Expense[], macroId: string): Expense[] {
-  return expenses.filter((e) => resolveCategory(e.category).macro.id === macroId)
+export function filterByMacroCategory(expenses: Expense[], macroId: string, customCategories: SubcategoryDef[] = []): Expense[] {
+  return expenses.filter((e) => resolveCategory(e.category, customCategories).macro.id === macroId)
 }
 
 /** Totali per sottocategoria all'interno di una macro-categoria, ordinati per importo decrescente. */
-export function bySubcategory(expenses: Expense[]): SubcategoryTotal[] {
+export function bySubcategory(expenses: Expense[], customCategories: SubcategoryDef[] = []): SubcategoryTotal[] {
   const map = new Map<string, SubcategoryTotal>()
   for (const e of expenses) {
-    const { subcategory, macro } = resolveCategory(e.category)
+    const { subcategory, macro } = resolveCategory(e.category, customCategories)
     const id = subcategory ? subcategory.id : macro.id
     const entry = map.get(id) ?? { id, total: 0, count: 0 }
     entry.total += e.amount

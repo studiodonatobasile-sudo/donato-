@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { deleteExpense as dbDeleteExpense, getAllExpenses, getSettings, saveExpense as dbSaveExpense, saveSettings } from './db'
 import { createEmptyExpense, DEFAULT_SETTINGS, type AppSettings, type Expense, type SummaryKind } from './types'
 import { useSummaryScheduler } from './hooks/useSummaryScheduler'
+import { CustomCategoriesProvider } from './context/CategoriesContext'
 import { Header } from './components/Header'
 import { VoiceExpenseBar } from './components/VoiceExpenseBar'
 import { Dashboard } from './components/Dashboard'
@@ -98,6 +99,7 @@ export default function App() {
   }
 
   return (
+    <CustomCategoriesProvider categories={settings.customCategories}>
     <div className="app-shell">
       <Header onOpenSettings={() => setShowSettings(true)} onOpenSummary={() => setShowSummaryChooser(true)} />
 
@@ -174,11 +176,13 @@ export default function App() {
       {showSettings && (
         <SettingsPanel
           settings={settings}
+          expenses={expenses}
           onChange={updateSettings}
           onClose={() => setShowSettings(false)}
           onResetData={handleResetData}
         />
       )}
     </div>
+    </CustomCategoriesProvider>
   )
 }
