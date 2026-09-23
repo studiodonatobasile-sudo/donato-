@@ -1,4 +1,4 @@
-import { getCategory, resolveCategory, type Expense } from '../types'
+import { getCategory, resolveCategory, type Expense, type SubcategoryDef } from '../types'
 import { byCategory, sumAmount } from './summary'
 
 interface ExpenseRow {
@@ -25,13 +25,17 @@ interface CategoryRow {
  * senza passare da un server. La libreria che genera il file (pesante) viene caricata solo
  * al momento dell'export, non nel bundle principale dell'app.
  */
-export async function exportExpensesToExcel(expenses: Expense[], filename: string): Promise<void> {
+export async function exportExpensesToExcel(
+  expenses: Expense[],
+  filename: string,
+  customCategories: SubcategoryDef[] = []
+): Promise<void> {
   const XLSX = await import('xlsx')
   const sorted = [...expenses].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
   const total = sumAmount(sorted)
 
   const expenseRows: ExpenseRow[] = sorted.map((e) => {
-    const { subcategory, macro } = resolveCategory(e.category)
+    const { subcategory, macro } = resolveCategory(e.category, customCategories)
     return {
       Data: e.date,
       Ora: e.time,
@@ -54,7 +58,7 @@ export async function exportExpensesToExcel(expenses: Expense[], filename: strin
     Fonte: ''
   })
 
-  const categoryRows: CategoryRow[] = byCategory(sorted).map((c) => ({
+  const categoryRows: CategoryRow[] = byCategory(sorted, customCategories).map((c) => ({
     Categoria: getCategory(c.id).label,
     'Importo (€)': c.total,
     '% sul totale': total > 0 ? Math.round((c.total / total) * 1000) / 10 : 0,

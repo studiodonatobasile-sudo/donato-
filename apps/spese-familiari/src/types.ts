@@ -34,6 +34,8 @@ export interface SubcategoryDef {
   id: string
   label: string
   macro: CategoryId
+  /** Solo per le sottocategorie personalizzate: parole chiave per il riscontro automatico. */
+  keywords?: string[]
 }
 
 // Sottocategorie: classificazione fine per l'annotazione delle spese. Molte di più delle
@@ -106,11 +108,18 @@ export type SubcategoryId = (typeof SUBCATEGORIES)[number]['id']
 
 export const DEFAULT_SUBCATEGORY: SubcategoryId = 'altro-varie'
 
-/** Cerca una sottocategoria per id. Accetta anche id di macro-categoria (dati salvati prima
- * dell'introduzione delle sottocategorie), restituendo in quel caso undefined: usare insieme
- * a getCategoryForExpense per la risoluzione completa con fallback. */
-export function findSubcategory(id: string): SubcategoryDef | undefined {
-  return SUBCATEGORIES.find((s) => s.id === id)
+/** Cerca una sottocategoria per id tra quelle predefinite e (se passate) quelle personalizzate
+ * dell'utente. Accetta anche id di macro-categoria (dati salvati prima dell'introduzione delle
+ * sottocategorie), restituendo in quel caso undefined: usare insieme a resolveCategory per la
+ * risoluzione completa con fallback. */
+export function findSubcategory(id: string, custom: SubcategoryDef[] = []): SubcategoryDef | undefined {
+  return SUBCATEGORIES.find((s) => s.id === id) ?? custom.find((s) => s.id === id)
+}
+
+/** Tutte le sottocategorie disponibili: quelle predefinite seguite dalle personalizzate
+ * dell'utente, raggruppabili per macro-categoria come le predefinite. */
+export function allSubcategories(custom: SubcategoryDef[] = []): SubcategoryDef[] {
+  return [...SUBCATEGORIES, ...custom]
 }
 
 export interface ResolvedCategory {
@@ -118,14 +127,26 @@ export interface ResolvedCategory {
   macro: CategoryDef
 }
 
-/** Risolve l'id di categoria salvato su una spesa (sottocategoria, o macro-categoria per i
- * dati salvati prima dell'introduzione delle sottocategorie) nella coppia sottocategoria/macro
- * da usare per etichetta e colore. */
-export function resolveCategory(id: string): ResolvedCategory {
-  const sub = findSubcategory(id)
+/** Risolve l'id di categoria salvato su una spesa (sottocategoria predefinita o personalizzata,
+ * o macro-categoria per i dati salvati prima dell'introduzione delle sottocategorie) nella
+ * coppia sottocategoria/macro da usare per etichetta e colore. Le categorie personalizzate vanno
+ * sempre passate quando disponibili: senza, una spesa con una sottocategoria personalizzata
+ * finirebbe classificata come "Altro". */
+export function resolveCategory(id: string, custom: SubcategoryDef[] = []): ResolvedCategory {
+  const sub = findSubcategory(id, custom)
   if (sub) return { subcategory: sub, macro: getCategory(sub.macro) }
   // Compatibilità con spese salvate quando esistevano solo le macro-categorie.
   return { subcategory: null, macro: getCategory(id) }
+}
+
+/** Crea una nuova sottocategoria personalizzata con un id univoco. */
+export function createCustomCategory(label: string, macro: CategoryId, keywords: string[]): SubcategoryDef {
+  return {
+    id: `custom-${crypto.randomUUID()}`,
+    label: label.trim(),
+    macro,
+    keywords: keywords.map((k) => k.trim()).filter(Boolean)
+  }
 }
 
 export type ExpenseSource = 'manual' | 'voice'
@@ -178,6 +199,8 @@ export interface AppSettings {
   notificationsRequested: boolean
   monthlyBudget: number | null
   familyMembers: string[]
+  /** Sottocategorie aggiunte dall'utente, in coda a quelle predefinite (vedi allSubcategories). */
+  customCategories: SubcategoryDef[]
   lastDailyShownDate: string | null
   lastWeeklyShownKey: string | null
   lastMonthlyShownKey: string | null
@@ -193,6 +216,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   notificationsRequested: false,
   monthlyBudget: null,
   familyMembers: ['Famiglia'],
+  customCategories: [
+    { id: 'custom-paghetta-ragazzi', label: 'Paghetta ragazzi', macro: 'istruzione', keywords: ['paghetta'] },
+    { id: 'custom-pranzo-regione', label: 'Pranzo regione', macro: 'svago', keywords: ['pranzo regione'] }
+  ],
   lastDailyShownDate: null,
   lastWeeklyShownKey: null,
   lastMonthlyShownKey: null

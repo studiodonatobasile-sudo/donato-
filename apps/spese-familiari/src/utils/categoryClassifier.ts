@@ -1,4 +1,4 @@
-import { DEFAULT_SUBCATEGORY, type SubcategoryId } from '../types'
+import { DEFAULT_SUBCATEGORY, type SubcategoryDef, type SubcategoryId } from '../types'
 
 // Parole chiave in italiano per il riscontro automatico della sottocategoria di spesa.
 // L'ordine conta: la prima sottocategoria con una corrispondenza vince (raggruppate per
@@ -73,10 +73,19 @@ function normalize(text: string): string {
     .trim()
 }
 
-/** Riconosce automaticamente la sottocategoria di spesa a partire dalla descrizione. */
-export function classifyCategory(description: string): SubcategoryId {
+/** Riconosce automaticamente la sottocategoria di spesa a partire dalla descrizione. Le parole
+ * chiave delle categorie personalizzate (impostazioni → Categorie personalizzate) hanno la
+ * precedenza su quelle predefinite: un termine scelto apposta dall'utente deve sempre vincere. */
+export function classifyCategory(description: string, customCategories: SubcategoryDef[] = []): SubcategoryId | string {
   const text = normalize(description)
   if (!text) return DEFAULT_SUBCATEGORY
+
+  for (const cat of customCategories) {
+    if ((cat.keywords ?? []).some((w) => w.trim() && text.includes(normalize(w)))) {
+      return cat.id
+    }
+  }
+
   for (const { subcategory, words } of KEYWORDS) {
     if (words.some((w) => text.includes(normalize(w)))) {
       return subcategory

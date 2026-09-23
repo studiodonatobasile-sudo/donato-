@@ -23,6 +23,14 @@ c'è un server, nessun account, nessun dato inviato altrove.
   Casa e bollette, Salute, Svago, Abbigliamento, Istruzione e bambini, Altro). La
   sottocategoria proposta è sempre modificabile manualmente dal menu, organizzato
   per macro-categoria.
+- **Categorie personalizzate**: dalle impostazioni (⚙️ → "Categorie personalizzate")
+  puoi aggiungere le tue sottocategorie di spesa, scegliendo a quale delle 8
+  macro-categorie appartengono (determina il colore nei grafici) e, facoltativamente,
+  delle parole chiave per il riscontro automatico dalla descrizione. Sono già
+  presenti di serie "Paghetta ragazzi" (sotto Istruzione e bambini) e "Pranzo
+  regione" (sotto Svago). Una categoria personalizzata si può eliminare in
+  qualsiasi momento; se è già usata in qualche spesa, viene chiesta conferma e le
+  spese collegate torneranno a comparire come "Altro".
 - **Dashboard con grafici**: vista Giorno / Settimana / Mese con totale speso,
   variazione rispetto al periodo precedente, ripartizione per macro-categoria
   (grafico a ciambella, per restare leggibile) e andamento giornaliero (grafico a

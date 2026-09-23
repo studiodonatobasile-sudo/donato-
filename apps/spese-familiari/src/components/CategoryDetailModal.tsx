@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { getCategory, resolveCategory, type Expense } from '../types'
 import { bySubcategory, filterByMacroCategory, sumAmount } from '../utils/summary'
 import { formatCurrency, formatPercent } from '../utils/format'
+import { useCustomCategories } from '../context/CategoriesContext'
 import { ExpenseList } from './ExpenseList'
 
 interface Props {
@@ -17,10 +18,14 @@ interface Props {
 
 /** Dettaglio di una macro-categoria: ripartizione per sottocategoria ed elenco dei movimenti. */
 export function CategoryDetailModal({ categoryId, expenses, rangeLabel, onClose, onEdit, onDelete }: Props) {
+  const customCategories = useCustomCategories()
   const category = getCategory(categoryId)
-  const categoryExpenses = useMemo(() => filterByMacroCategory(expenses, categoryId), [expenses, categoryId])
+  const categoryExpenses = useMemo(
+    () => filterByMacroCategory(expenses, categoryId, customCategories),
+    [expenses, categoryId, customCategories]
+  )
   const total = useMemo(() => sumAmount(categoryExpenses), [categoryExpenses])
-  const subcategories = useMemo(() => bySubcategory(categoryExpenses), [categoryExpenses])
+  const subcategories = useMemo(() => bySubcategory(categoryExpenses, customCategories), [categoryExpenses, customCategories])
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -39,7 +44,7 @@ export function CategoryDetailModal({ categoryId, expenses, rangeLabel, onClose,
             <h3 className="section-title">Per sottocategoria</h3>
             <div className="subcategory-rank">
               {subcategories.map((s) => {
-                const { subcategory } = resolveCategory(s.id)
+                const { subcategory } = resolveCategory(s.id, customCategories)
                 const fraction = total > 0 ? s.total / total : 0
                 return (
                   <div className="subcategory-rank-row" key={s.id}>
