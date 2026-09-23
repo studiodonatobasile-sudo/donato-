@@ -204,6 +204,11 @@ export interface AppSettings {
   /** Token GitHub "fine-grained" (permesso solo Contents su questo repo) per la sincronizzazione
    * automatica delle nuove spese verso il foglio Drive. Resta solo sul dispositivo dell'utente. */
   githubSyncToken: string | null
+  /** Giorno di attivazione della sincronizzazione: si inviano le spese da questa data in poi. */
+  syncStartDate: string | null
+  /** Id delle spese già accodate nel repository privato. */
+  syncedExpenseIds: string[]
+  lastSyncResult: { at: number; ok: boolean; message: string } | null
   lastDailyShownDate: string | null
   lastWeeklyShownKey: string | null
   lastMonthlyShownKey: string | null
@@ -224,6 +229,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
     { id: 'custom-pranzo-regione', label: 'Pranzo regione', macro: 'svago', keywords: ['pranzo regione'] }
   ],
   githubSyncToken: null,
+  syncStartDate: null,
+  syncedExpenseIds: [],
+  lastSyncResult: null,
   lastDailyShownDate: null,
   lastWeeklyShownKey: null,
   lastMonthlyShownKey: null
