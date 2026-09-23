@@ -166,11 +166,10 @@ export function SettingsPanel({ settings, expenses, onChange, onClose, onResetDa
         <div className="settings-section">
           <h3 className="section-title">Sincronizzazione verso Google Drive</h3>
           <p className="hint">
-            Le nuove spese possono essere messe in coda in un repository GitHub <strong>privato</strong>{' '}
-            (visibile solo a te, mai su internet), pronte per essere copiate nel foglio "Spese
-            Familiari" del file Drive "Gestione_Forfettario_PRO mensile.xlsx". La scrittura sul
-            foglio Drive avviene solo quando la richiedi esplicitamente (per ora nessun invio
-            automatico in background). Per attivare la coda, crea un token GitHub "fine-grained"
+            Le nuove spese vengono messe in coda in un repository GitHub <strong>privato</strong>{' '}
+            (visibile solo a te, mai su internet) e ogni notte vengono copiate automaticamente nel
+            foglio "Spese Familiari" del file Drive "Gestione_Forfettario_PRO mensile.xlsx", usando
+            solo le colonne già presenti. Per attivarla, crea un token GitHub "fine-grained"
             limitato al solo repository privato <code>spese-familiari-sync-privato</code> (permesso
             "Contents: Read and write") da{' '}
             <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">
@@ -192,7 +191,7 @@ export function SettingsPanel({ settings, expenses, onChange, onClose, onResetDa
           </div>
           <p className="hint">
             {settings.githubSyncToken
-              ? '✅ Coda attiva: le nuove spese vengono accodate in privato, pronte per la sincronizzazione su richiesta.'
+              ? '✅ Sincronizzazione attiva: le nuove spese vengono accodate in privato e copiate ogni notte sul foglio Drive.'
               : 'Coda non attiva: le spese restano solo su questo dispositivo.'}
           </p>
         </div>

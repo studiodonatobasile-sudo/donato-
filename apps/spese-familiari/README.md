@@ -65,10 +65,10 @@ c'è un server, nessun account, nessun dato inviato altrove.
   l'accodamento automatico delle nuove spese verso un repository GitHub **privato**
   dedicato (mai quello pubblico del sito), tramite un token personale "fine-grained"
   limitato a quel solo repository, che resta salvato solo sul dispositivo dell'utente.
-  La scrittura effettiva nel foglio "Spese Familiari" del file Drive
-  "Gestione_Forfettario_PRO mensile.xlsx" avviene solo su richiesta esplicita (per ora
-  nessun invio automatico in background), riusa solo le colonne già presenti nel foglio
-  e non ne aggiunge di nuove.
+  Ogni notte una routine automatica copia le spese in coda nel foglio "Spese Familiari"
+  del file Drive "Gestione_Forfettario_PRO mensile.xlsx", compilando solo le colonne già
+  presenti (N., Data, Descrizione, Categoria, Importo €) senza aggiungerne di nuove, così
+  che la Dashboard del file le conteggi automaticamente.
 
 ## Requisiti del browser
 
