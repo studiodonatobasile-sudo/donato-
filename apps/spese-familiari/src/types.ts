@@ -201,14 +201,11 @@ export interface AppSettings {
   familyMembers: string[]
   /** Sottocategorie aggiunte dall'utente, in coda a quelle predefinite (vedi allSubcategories). */
   customCategories: SubcategoryDef[]
-  /** Token GitHub "fine-grained" (permesso solo Contents su questo repo) per la sincronizzazione
-   * automatica delle nuove spese verso il foglio Drive. Resta solo sul dispositivo dell'utente. */
-  githubSyncToken: string | null
-  /** Giorno di attivazione della sincronizzazione: si inviano le spese da questa data in poi. */
-  syncStartDate: string | null
-  /** Id delle spese già accodate nel repository privato. */
-  syncedExpenseIds: string[]
-  lastSyncResult: { at: number; ok: boolean; message: string } | null
+  /** Giorno del primo invio a Drive: si inviano le spese da questa data in poi. */
+  driveExportStartDate: string | null
+  /** Id delle spese già condivise verso Drive (per la trascrizione nel foglio Excel). */
+  driveExportedIds: string[]
+  lastDriveExport: { at: number; count: number } | null
   lastDailyShownDate: string | null
   lastWeeklyShownKey: string | null
   lastMonthlyShownKey: string | null
@@ -228,10 +225,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
     { id: 'custom-paghetta-ragazzi', label: 'Paghetta ragazzi', macro: 'istruzione', keywords: ['paghetta'] },
     { id: 'custom-pranzo-regione', label: 'Pranzo regione', macro: 'svago', keywords: ['pranzo regione'] }
   ],
-  githubSyncToken: null,
-  syncStartDate: null,
-  syncedExpenseIds: [],
-  lastSyncResult: null,
+  driveExportStartDate: null,
+  driveExportedIds: [],
+  lastDriveExport: null,
   lastDailyShownDate: null,
   lastWeeklyShownKey: null,
   lastMonthlyShownKey: null

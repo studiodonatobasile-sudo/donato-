@@ -1,31 +1,21 @@
 import { useState } from 'react'
 import { CATEGORIES, createCustomCategory, getCategory, type AppSettings, type Expense } from '../types'
 
-// Chiavi GitHub: fine-grained (github_pat_…) o classiche (ghp_…), solo caratteri ASCII.
-const TOKEN_PATTERN = /^(github_pat_|gh[pousr]_)[A-Za-z0-9_]{20,}$/
-
-function tokenProblem(value: string | null): string | null {
-  if (!value || TOKEN_PATTERN.test(value)) return null
-  return `Chiave incompleta o non valida (${value.length} caratteri): una chiave completa inizia con "github_pat_" ed è lunga circa 90 caratteri. Copiala di nuovo da GitHub con l'icona di copia accanto al codice.`
-}
-
 interface Props {
   settings: AppSettings
   expenses: Expense[]
   onChange: (settings: AppSettings) => void
   onClose: () => void
   onResetData: () => void
-  onSyncNow: () => void
+  onSendToDrive: () => void
 }
 
-export function SettingsPanel({ settings, expenses, onChange, onClose, onResetData, onSyncNow }: Props) {
+export function SettingsPanel({ settings, expenses, onChange, onClose, onResetData, onSendToDrive }: Props) {
   const [membersInput, setMembersInput] = useState(settings.familyMembers.join(', '))
   const [budgetInput, setBudgetInput] = useState(settings.monthlyBudget !== null ? String(settings.monthlyBudget) : '')
   const [newLabel, setNewLabel] = useState('')
   const [newMacro, setNewMacro] = useState(CATEGORIES[CATEGORIES.length - 1].id)
   const [newKeywords, setNewKeywords] = useState('')
-  const [tokenInput, setTokenInput] = useState(settings.githubSyncToken ?? '')
-  const [tokenError, setTokenError] = useState<string | null>(tokenProblem(settings.githubSyncToken))
 
   const notificationsSupported = 'Notification' in window
 
@@ -46,13 +36,6 @@ export function SettingsPanel({ settings, expenses, onChange, onClose, onResetDa
   const commitBudget = () => {
     const value = budgetInput.trim() === '' ? null : Number(budgetInput.replace(',', '.'))
     onChange({ ...settings, monthlyBudget: value !== null && value > 0 ? value : null })
-  }
-
-  const commitToken = () => {
-    const value = tokenInput.replace(/\s+/g, '')
-    const problem = tokenProblem(value)
-    setTokenError(problem)
-    onChange({ ...settings, githubSyncToken: value === '' || problem ? null : value })
   }
 
   const handleAddCategory = (e: React.FormEvent) => {
@@ -176,51 +159,21 @@ export function SettingsPanel({ settings, expenses, onChange, onClose, onResetDa
         </div>
 
         <div className="settings-section">
-          <h3 className="section-title">Sincronizzazione verso Google Drive</h3>
+          <h3 className="section-title">Invio spese al foglio Drive</h3>
           <p className="hint">
-            Le nuove spese vengono messe in coda in un repository GitHub <strong>privato</strong>{' '}
-            (visibile solo a te, mai su internet) e ogni notte vengono copiate automaticamente nel
-            foglio "Spese Familiari" del file Drive "Gestione_Forfettario_PRO mensile.xlsx", usando
-            solo le colonne già presenti. Per attivarla, crea un token GitHub "fine-grained"
-            limitato al solo repository privato <code>spese-familiari-sync--privato</code> (permesso
-            "Contents: Read and write") da{' '}
-            <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">
-              github.com/settings/personal-access-tokens/new
-            </a>{' '}
-            e incollalo qui sotto. Resta solo su questo dispositivo: non viene mai salvato nel
-            codice dell'app né in repository pubblici.
+            Tocca "📤 Invia a Drive" (anche dal riepilogo della sera) e scegli Drive: ogni notte le
+            spese vengono trascritte nel foglio "Spese Familiari" del file
+            "Gestione_Forfettario_PRO mensile.xlsx", solo nelle colonne già presenti e senza doppioni.
+            Il file resta privato nel tuo Drive.
           </p>
-          <div className="field">
-            <label htmlFor="github-token">Token di sincronizzazione</label>
-            <input
-              id="github-token"
-              type="password"
-              placeholder="Incolla qui la chiave (inizia con github_pat_)"
-              value={tokenInput}
-              onChange={(e) => setTokenInput(e.target.value)}
-              onBlur={commitToken}
-            />
-          </div>
-          {tokenError && <p className="hint error-text">⚠️ {tokenError}</p>}
-          {settings.githubSyncToken ? (
-            <>
-              <p className="hint">
-                ✅ Sincronizzazione attiva (chiave di {settings.githubSyncToken.length} caratteri)
-                {settings.syncStartDate ? ` dal ${new Date(`${settings.syncStartDate}T00:00:00`).toLocaleDateString('it-IT')}` : ''}: le spese vengono
-                inviate in privato e copiate ogni notte sul foglio Drive.
-              </p>
-              {settings.lastSyncResult && (
-                <p className={settings.lastSyncResult.ok ? 'hint' : 'hint error-text'}>
-                  Ultimo invio ({new Date(settings.lastSyncResult.at).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' })}):{' '}
-                  {settings.lastSyncResult.ok ? '✅' : '⚠️'} {settings.lastSyncResult.message}
-                </p>
-              )}
-              <button type="button" className="btn secondary" onClick={onSyncNow}>
-                🔄 Invia ora
-              </button>
-            </>
-          ) : (
-            <p className="hint">Sincronizzazione non attiva: le spese restano solo su questo dispositivo.</p>
+          <button type="button" className="btn secondary" onClick={onSendToDrive}>
+            📤 Invia a Drive
+          </button>
+          {settings.lastDriveExport && (
+            <p className="hint">
+              Ultimo invio: {new Date(settings.lastDriveExport.at).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' })},{' '}
+              {settings.lastDriveExport.count} {settings.lastDriveExport.count === 1 ? 'spesa' : 'spese'}
+            </p>
           )}
         </div>
 
