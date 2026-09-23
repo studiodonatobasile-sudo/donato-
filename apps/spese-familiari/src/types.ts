@@ -201,6 +201,9 @@ export interface AppSettings {
   familyMembers: string[]
   /** Sottocategorie aggiunte dall'utente, in coda a quelle predefinite (vedi allSubcategories). */
   customCategories: SubcategoryDef[]
+  /** Token GitHub "fine-grained" (permesso solo Contents su questo repo) per la sincronizzazione
+   * automatica delle nuove spese verso il foglio Drive. Resta solo sul dispositivo dell'utente. */
+  githubSyncToken: string | null
   lastDailyShownDate: string | null
   lastWeeklyShownKey: string | null
   lastMonthlyShownKey: string | null
@@ -220,6 +223,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     { id: 'custom-paghetta-ragazzi', label: 'Paghetta ragazzi', macro: 'istruzione', keywords: ['paghetta'] },
     { id: 'custom-pranzo-regione', label: 'Pranzo regione', macro: 'svago', keywords: ['pranzo regione'] }
   ],
+  githubSyncToken: null,
   lastDailyShownDate: null,
   lastWeeklyShownKey: null,
   lastMonthlyShownKey: null

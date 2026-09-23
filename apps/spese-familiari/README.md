@@ -61,6 +61,14 @@ c'è un server, nessun account, nessun dato inviato altrove.
   la notifica di sistema riporta già la sintesi vera del periodo — totale speso e
   categoria principale — anche se la scheda non è in primo piano; toccandola si apre
   l'app sul riepilogo, da cui esportare in Excel.
+- **Sincronizzazione verso Google Drive** (opzionale): dalle impostazioni si può attivare
+  l'accodamento automatico delle nuove spese verso un repository GitHub **privato**
+  dedicato (mai quello pubblico del sito), tramite un token personale "fine-grained"
+  limitato a quel solo repository, che resta salvato solo sul dispositivo dell'utente.
+  Ogni notte una routine automatica copia le spese in coda nel foglio "Spese Familiari"
+  del file Drive "Gestione_Forfettario_PRO mensile.xlsx", compilando solo le colonne già
+  presenti (N., Data, Descrizione, Categoria, Importo €) senza aggiungerne di nuove, così
+  che la Dashboard del file le conteggi automaticamente.
 
 ## Requisiti del browser
 
